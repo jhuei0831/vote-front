@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { BrowserRouter} from "react-router"
+import { BrowserRouter } from "react-router"
 import RouteConf from "./RouteConf"
 
 // BrowserRouter 就像 redux 的 provider 一樣，必須在最上層來處理

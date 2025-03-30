@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import axios from "axios"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,30 +11,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-// import { isTokenValid } from "@/components/auth/token"
-
-export const useAuthRedirect = () => {
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch('https://vote.oxtomato.com/v1/user/check-auth', {
-          method: "POST",
-          credentials: 'include',
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (response.status === 200) {
-          window.location.href = "/"; // 導向首頁
-        }
-      } catch (error) {
-        console.error("Failed to check authentication status:", error);
-      }
-    };
-
-    checkAuthStatus();
-  }, []);
-};
 
 export default function LoginForm({
   className,
@@ -43,12 +19,6 @@ export default function LoginForm({
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
-
-  useAuthRedirect();
-
-  if (typeof window !== "undefined") {
-    return null; // 在渲染頁面前不渲染任何內容
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +37,7 @@ export default function LoginForm({
       )
       console.log("Login successful:", response.data)
       // 在這裡處理登入成功的邏輯，例如儲存 token 或跳轉頁面
+      window.location.href = "/"
     } catch (err: any) {
       console.error("Login failed:", err)
       setError(err.response?.data?.message || "Login failed. Please try again.")
