@@ -3,15 +3,13 @@ import { Link } from 'react-router'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/context/AuthContext'
-import { UserProfile } from '@/components/UserProfile'
+import { UserProfile } from '@/components/backstage/UserProfile'
 
 const Navbar: FC = () => {
 
   const navigation = [
-    { name: 'Product', href: '#' },
-    { name: 'Features', href: '#' },
-    { name: 'Marketplace', href: '#' },
-    { name: 'Company', href: '#' },
+    { name: 'About', href: '#' },
+    { name: 'Princing', href: '#' },
   ]
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)

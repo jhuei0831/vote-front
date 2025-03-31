@@ -1,5 +1,5 @@
 // src/components/UserProfile.tsx
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 export function UserProfile() {
   const { isAuthorized } = useAuth();

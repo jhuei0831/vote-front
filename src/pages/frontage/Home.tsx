@@ -1,22 +1,12 @@
-'use client'
-
-import axios from 'axios';
-import Navbar from '../components/Navbar'
+import Navbar from '../../components/frontstage/Navbar'
 import { AuthProvider } from '@/context/AuthContext';
+import api from '@/utils/api';
 
-export default function Example() {
-  // 封裝帶 Cookie 的請求
-  const authFetch = axios.create({
-    baseURL: 'https://vote.oxtomato.com/v1',
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+export function Home() {
 
   // 使用範例
   const getUserData = async () => {
-    const response = await authFetch.get('/user/2');
+    const response = await api.get('/v1/user/2');
     if (response.status !== 200) throw new Error('未授權');
     return response.data;
   };
