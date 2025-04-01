@@ -1,5 +1,5 @@
 import * as React from "react"
-import { GalleryVerticalEnd } from "lucide-react"
+import { Vote } from "lucide-react"
 
 import {
   Sidebar,
@@ -21,33 +21,49 @@ function isActive(path: string) {
   return window.location.pathname === path
 }
 
-// This is sample data.
+// get Vote ID from URL Query
+function hasVoteId() {
+  const params = new URLSearchParams(window.location.search)
+  return params.has("voteId")
+}
+
 const data = {
   navMain: [
     {
-      title: "投票",
-      url: "#",
+      title: "投票管理",
+      url: "/vote",
+      isActive: isActive("/backstage/vote"),
       items: [
         {
-          title: "投票",
-          url: "/vote",
-          isActive: isActive("/backstage/vote"),
+          title: "編輯",
+          url: "/question",
+          isActive: isActive("/backstage/vote/update"),
+          visible: hasVoteId()
+        },
+        {
+          title: "問題",
+          url: "/question",
+          isActive: isActive("/backstage/question"),
+          visible: hasVoteId()
         },
       ],
     },
     {
       title: "設定",
       url: "#",
+      isActive: false,
       items: [
         {
           title: "使用者資料",
           url: "#",
           isActive: isActive("/backstage/user-profile"),
+          visible: true
         },
         {
           title: "系統設定",
           url: "#",
           isActive: isActive("/backstage/settings"),
+          visible: true
         },
       ],
     },
@@ -63,7 +79,7 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
             <SidebarMenuButton size="lg" asChild>
               <a href="/backstage">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <GalleryVerticalEnd className="size-4" />
+                  <Vote className="size-5" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">MyVote</span>
@@ -78,8 +94,8 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
           <SidebarMenu>
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <a href={item.url} className="font-medium">
+                <SidebarMenuButton asChild isActive={item.isActive}>
+                  <a href={"/backstage"+item.url} className="font-medium">
                     {item.title}
                   </a>
                 </SidebarMenuButton>
@@ -88,7 +104,7 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
                     {item.items.map((item) => (
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild isActive={item.isActive}>
-                            <Link to={"/backstage"+item.url}>{item.title}</Link>
+                            <Link to={"/backstage"+item.url} className={item.visible ? "" : "hidden"}>{item.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

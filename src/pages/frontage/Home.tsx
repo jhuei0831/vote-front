@@ -1,17 +1,7 @@
 import Navbar from '../../components/frontstage/Navbar'
 import { AuthProvider } from '@/context/AuthContext';
-import api from '@/utils/api';
 
 export function Home() {
-
-  // 使用範例
-  const getUserData = async () => {
-    const response = await api.get('/v1/user/2');
-    if (response.status !== 200) throw new Error('未授權');
-    return response.data;
-  };
-
-  console.log(getUserData());
 
   return (
     <div className="bg-white">

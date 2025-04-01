@@ -3,6 +3,8 @@ import Login from '@/pages/Login'
 import { Home as FrontHome } from '@/pages/frontage/Home'
 import { Home as BackHome } from '@/pages/backstage/Home'
 import Index from '@/pages/backstage/vote/Index'
+import Create from '@/pages/backstage/vote/create'
+import Update from '@/pages/backstage/vote/Update'
 import { ProtectedRoute } from "@/router/ProtectedRoute"
 import { AuthProvider } from "@/context/AuthContext"
 
@@ -29,6 +31,8 @@ const routes = [
     children: [
       { index: true, element: <BackHome /> },
       { path: "/backstage/vote", element: <Index /> },
+      { path: "/backstage/vote/create", element: <Create /> },
+      { path: "/backstage/vote/update", element: <Update /> },
     ]
   }
 ]

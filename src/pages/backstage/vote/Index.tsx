@@ -1,33 +1,26 @@
-"use client"
-
 import Layout from "@/components/backstage/BackLayout";
-import * as React from "react"
+import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
-  flexRender,
+  useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+  flexRender,
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -35,97 +28,90 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
+import Pagination from "@/components/Pagination";
 import api from "@/utils/api";
+import { Link } from "react-router";
 
-async function getData(): Promise<Vote[]> {
-    // Fetch data from your API here.
-    return api.get("/v1/vote/list")
-        .then((res) => {
-            return res.data.vote
-        })
-        .catch((err) => {
-            console.log(err)
-            return []
-        })
-
+async function fetchData(page: number, size: number) {
+  try {
+    const response = await api.get("/v1/vote/list", { params: { page, size } });
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    return { data: [], pagination: { total: 0, total_pages: 0 } };
+  }
 }
 
-
-const data: Vote[] = await getData()
+async function handleDelete(id: string) {
+  if (confirm("Are you sure you want to delete this vote?")) {
+    try {
+      const response = await api.delete(`/v1/vote/`, { data: [id] });
+      alert(response.data.msg);
+      window.location.reload();
+    } catch (err) {
+      alert("Failed to delete vote.");
+      console.log(err);
+    }
+  }
+}
 
 export type Vote = {
-  id: string
-  title: string
-  start_time: string
-  end_time: string
-}
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+};
 
 export const columns: ColumnDef<Vote>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: "id",
-    header: "id",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("id")}</div>
-    ),
+    header: "ID",
+    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
   },
   {
     accessorKey: "title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("title")}</div>,
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Title
+        <ArrowUpDown />
+      </Button>
+    ),
+    cell: ({ row }) => <div className="lowercase">
+        <a 
+          href={`/backstage/vote/update?voteId=${row.getValue("id")}`} 
+          className="text-blue-500 hover:underline"
+          >
+          {row.getValue("title")}
+        </a>
+      </div>,
   },
   {
     accessorKey: "start_time",
     header: () => <div className="text-center">Start Time</div>,
-    cell: ({ row }) => {
-      return <div className="text-center font-medium">{row.getValue("start_time")}</div>
-    },
+    cell: ({ row }) => (
+      <div className="text-center font-medium">
+        {new Date(row.getValue("start_time")).toLocaleString()}
+      </div>
+    ),
   },
   {
     accessorKey: "end_time",
     header: () => <div className="text-center">End Time</div>,
-    cell: ({ row }) => {
-      return <div className="text-center font-medium">{row.getValue("end_time")}</div>
-    },
+    cell: ({ row }) => (
+      <div className="text-center font-medium">
+        {new Date(row.getValue("end_time")).toLocaleString()}
+      </div>
+    ),
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const vote = row.original
-
+      const vote = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -135,74 +121,82 @@ export const columns: ColumnDef<Vote>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleDelete(vote.id)}>
+              Delete
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(vote.id)}
             >
               Copy Vote ID
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View Vote details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
 
 export default function Index() {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+    React.useState<VisibilityState>({});
+  const [pageIndex, setPageIndex] = React.useState(0);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [data, setData] = React.useState<Vote[]>([]);
+  const [pagination, setPagination] = React.useState({
+    total: 0,
+    total_pages: 0,
+  });
+
+  React.useEffect(() => {
+    async function loadData() {
+      const response = await fetchData(pageIndex + 1, pageSize);
+      setData(response.data);
+      setPagination(response.pagination);
+    }
+    loadData();
+  }, [pageIndex, pageSize]);
 
   const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    rowCount: pagination.total,
+    pageCount: pagination.total_pages,
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
-      rowSelection,
+      pagination: { pageIndex, pageSize },
     },
-  })
+  });
 
   return (
     <Layout>
-    <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter titles..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown />
+      <div className="w-full">
+        <div className="flex items-center py-4">
+          <Link to="/backstage/vote/create">
+            <Button variant="outline" className="mr-auto">
+              <Plus />
+              New Vote
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Columns <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.id}
                     className="capitalize"
@@ -213,18 +207,45 @@ export default function Index() {
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-2">
+                Page size <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {[5, 10, 20, 50].map((size) => (
+                <DropdownMenuItem
+                  key={size}
+                  onClick={() => setPageSize(size)}
+                  className={`capitalize ${
+                    pageSize === size ? "bg-gray-100 font-bold" : ""
+                  }`}
+                >
+                  {size}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setPageSize(10);
+                  setPageIndex(0);
+                }}
+              >
+                Reset
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
@@ -233,66 +254,53 @@ export default function Index() {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Showing {pageIndex * pageSize + 1} to{" "}
+            {Math.min((pageIndex + 1) * pageSize, pagination.total)} of{" "}
+            {pagination.total} entries
+          </div>
+          <Pagination
+            pageIndex={pageIndex}
+            pageCount={pagination.total_pages}
+            onPageChange={setPageIndex}
+          />
         </div>
       </div>
-    </div>
     </Layout>
-  )
+  );
 }
