@@ -18,13 +18,19 @@ import { Link } from "react-router"
 
 // check path is active
 function isActive(path: string) {
-  return window.location.pathname === path
+  return path.includes(window.location.pathname)
 }
 
-// get Vote ID from URL Query
+// check if the URL contains "voteId"
 function hasVoteId() {
   const params = new URLSearchParams(window.location.search)
   return params.has("voteId")
+}
+
+// get Vote ID from URL Query
+function getVoteId() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get("voteId")
 }
 
 const data = {
@@ -32,38 +38,52 @@ const data = {
     {
       title: "投票管理",
       url: "/vote",
-      isActive: isActive("/backstage/vote"),
       items: [
         {
           title: "編輯",
-          url: "/question",
-          isActive: isActive("/backstage/vote/update"),
-          visible: hasVoteId()
+          url: "/vote/update" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
         },
         {
           title: "問題",
-          url: "/question",
-          isActive: isActive("/backstage/question"),
-          visible: hasVoteId()
+          url: "/question" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
+        },
+        {
+          title: "候選",
+          url: "/candidate" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
+        },
+        {
+          title: "密碼",
+          url: "/password" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
+        },
+        {
+          title: "選票",
+          url: "/ballot" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
+        },
+        {
+          title: "計票",
+          url: "/count" + `?voteId=${getVoteId()}`,
+          visible: hasVoteId(),
         },
       ],
     },
     {
       title: "設定",
       url: "#",
-      isActive: false,
       items: [
         {
           title: "使用者資料",
-          url: "#",
-          isActive: isActive("/backstage/user-profile"),
-          visible: true
+          url: "/backstage/user-profile",
+          visible: true,
         },
         {
           title: "系統設定",
-          url: "#",
-          isActive: isActive("/backstage/settings"),
-          visible: true
+          url: "/backstage/settings",
+          visible: true,
         },
       ],
     },
@@ -94,17 +114,28 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
           <SidebarMenu>
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={item.isActive}>
-                  <a href={"/backstage"+item.url} className="font-medium">
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive("/backstage" + item.url)}
+                >
+                  <a href={"/backstage" + item.url} className="font-medium">
                     {item.title}
                   </a>
                 </SidebarMenuButton>
                 {item.items?.length ? (
                   <SidebarMenuSub>
-                    {item.items.map((item) => (
-                      <SidebarMenuSubItem key={item.title}>
-                        <SidebarMenuSubButton asChild isActive={item.isActive}>
-                            <Link to={"/backstage"+item.url} className={item.visible ? "" : "hidden"}>{item.title}</Link>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={isActive("/backstage" + subItem.url)}
+                        >
+                          <Link
+                            to={"/backstage" + subItem.url}
+                            className={subItem.visible ? "" : "hidden"}
+                          >
+                            {subItem.title}
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

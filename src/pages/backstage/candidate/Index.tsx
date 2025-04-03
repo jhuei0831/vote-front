@@ -35,7 +35,8 @@ import { Link } from "react-router";
 
 async function fetchData(page: number, size: number) {
   try {
-    const response = await api.get("/v1/vote/list", { params: { page, size } });
+    const voteId = new URLSearchParams(window.location.search).get("voteId");
+    const response = await api.get("/v1/candidate/list/"+voteId, { params: { page, size } });
     return response.data;
   } catch (err) {
     console.error(err);
@@ -44,26 +45,25 @@ async function fetchData(page: number, size: number) {
 }
 
 async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this vote?")) {
+  if (confirm("Are you sure you want to delete this candidate?")) {
     try {
-      const response = await api.delete(`/v1/vote/`, { data: [id] });
+      const response = await api.delete(`/v1/candidate/`, { data: [id] });
       alert(response.data.msg);
       window.location.reload();
     } catch (err) {
-      alert("Failed to delete vote.");
+      alert("Failed to delete candidate.");
       console.log(err);
     }
   }
 }
 
-export type Vote = {
+export type Candidate = {
   id: string;
   title: string;
-  start_time: string;
-  end_time: string;
+  updated_at: string;
 };
 
-export const columns: ColumnDef<Vote>[] = [
+export const columns: ColumnDef<Candidate>[] = [
   {
     accessorKey: "id",
     header: "ID",
@@ -82,7 +82,7 @@ export const columns: ColumnDef<Vote>[] = [
     ),
     cell: ({ row }) => <div className="lowercase">
         <a 
-          href={`/backstage/vote/update?voteId=${row.getValue("id")}`} 
+          href={`/backstage/candidate/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&candidateId=${row.getValue("id")}`} 
           className="text-blue-500 hover:underline"
           >
           {row.getValue("title")}
@@ -90,20 +90,11 @@ export const columns: ColumnDef<Vote>[] = [
       </div>,
   },
   {
-    accessorKey: "start_time",
+    accessorKey: "updated_at",
     header: () => <div className="text-center">Start Time</div>,
     cell: ({ row }) => (
       <div className="text-center font-medium">
-        {new Date(row.getValue("start_time")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "end_time",
-    header: () => <div className="text-center">End Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("end_time")).toLocaleString()}
+        {new Date(row.getValue("updated_at")).toLocaleString()}
       </div>
     ),
   },
@@ -111,7 +102,7 @@ export const columns: ColumnDef<Vote>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const vote = row.original;
+      const candidate = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -121,14 +112,8 @@ export const columns: ColumnDef<Vote>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(vote.id)}>
+            <DropdownMenuItem onClick={() => handleDelete(candidate.id)}>
               Delete
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(vote.id)}
-            >
-              Copy Vote ID
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -137,13 +122,13 @@ export const columns: ColumnDef<Vote>[] = [
   },
 ];
 
-export default function VoteIndex() {
+export default function CandidateIndex() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
-  const [data, setData] = React.useState<Vote[]>([]);
+  const [data, setData] = React.useState<Candidate[]>([]);
   const [pagination, setPagination] = React.useState({
     total: 0,
     total_pages: 0,
@@ -180,10 +165,10 @@ export default function VoteIndex() {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
-          <Link to="/backstage/vote/create">
+          <Link to={"/backstage/candidate/create?voteId=" + (new URLSearchParams(window.location.search).get('voteId'))}>
             <Button variant="outline" className="mr-auto">
               <Plus />
-              New Vote
+              New Candidate
             </Button>
           </Link>
           <DropdownMenu>

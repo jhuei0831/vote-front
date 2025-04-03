@@ -15,3 +15,11 @@ export function ProtectedRoute() {
   if (isAuthorized === null) return <div>Loading...</div>;
   return <Outlet />;
 }
+
+export function RouteWithVoteId() {
+  const params = new URLSearchParams(window.location.search)
+  if (!params.has("voteId")) {
+    window.location.href = "/backstage/vote";
+  }
+  return <Outlet />;
+}
