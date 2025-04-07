@@ -29,14 +29,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Pagination from "@/components/Pagination";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import api from "@/utils/api";
-import { Link } from "react-router";
+import PasswordCreate from "./Create";
+import Pagination from "@/components/Pagination";
 
-export async function fetchQuestions(page: number, size: number) {
+async function fetchPasswords(page: number, size: number) {
   try {
     const voteId = new URLSearchParams(window.location.search).get("voteId");
-    const response = await api.get("/v1/question/list/"+voteId, { params: { page, size } });
+    const response = await api.get("/v1/password/list/"+voteId, { params: { page, size } });
     return response.data;
   } catch (err) {
     console.error(err);
@@ -45,98 +54,124 @@ export async function fetchQuestions(page: number, size: number) {
 }
 
 async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this question?")) {
+  if (confirm("Are you sure you want to delete this password?")) {
     try {
-      const response = await api.delete(`/v1/question/`, { data: [id] });
+      const response = await api.delete(`/v1/password/`, { data: [id] });
       alert(response.data.msg);
       window.location.reload();
     } catch (err) {
-      alert("Failed to delete question.");
+      alert("Failed to delete password.");
       console.log(err);
     }
   }
 }
 
-export type Question = {
+export function DialogPasswordCreate() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Plus />
+          New Password
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>New Password</DialogTitle>
+          <DialogDescription>
+            Create new password for this vote.
+          </DialogDescription>
+        </DialogHeader>
+        <PasswordCreate />
+        <DialogFooter>
+          <Button type="submit" form="password-create-form">Submit</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export type Password = {
   id: string;
-  title: string;
-  updated_at: string;
+  password: string;
+  status: string;
 };
 
-export const columns: ColumnDef<Question>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Title
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="lowercase">
-        <a 
-          href={`/backstage/question/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&questionId=${row.getValue("id")}`} 
-          className="text-blue-500 hover:underline"
-          >
-          {row.getValue("title")}
-        </a>
-      </div>,
-  },
-  {
-    accessorKey: "updated_at",
-    header: () => <div className="text-center">Start Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("updated_at")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const question = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(question.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-export default function QuestionIndex() {
+export default function PasswordIndex() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
-  const [data, setData] = React.useState<Question[]>([]);
+  const [data, setData] = React.useState<Password[]>([]);
   const [pagination, setPagination] = React.useState({
     total: 0,
     total_pages: 0,
   });
+  
+  const columns: ColumnDef<Password>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "password",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Password
+          <ArrowUpDown />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {row.getValue("password")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: () => <div className="text-center">Status</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {row.getValue("status") === "1" ? (
+            <span className="text-green-500">Active</span>
+          ) : (
+            <span className="text-red-500">Inactive</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const password = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDelete(password.id)}>
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   React.useEffect(() => {
     async function loadData() {
-      const response = await fetchQuestions(pageIndex + 1, pageSize);
+      const response = await fetchPasswords(pageIndex + 1, pageSize);
       setData(response.data);
       setPagination(response.pagination);
     }
@@ -165,12 +200,7 @@ export default function QuestionIndex() {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
-          <Link to={"/backstage/question/create?voteId=" + (new URLSearchParams(window.location.search).get('voteId'))}>
-            <Button variant="outline" className="mr-auto">
-              <Plus />
-              New Question
-            </Button>
-          </Link>
+          <DialogPasswordCreate />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

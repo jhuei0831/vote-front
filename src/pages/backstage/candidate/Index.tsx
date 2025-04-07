@@ -30,10 +30,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
+import { fetchQuestions } from "@/pages/backstage/question/Index";
 import api from "@/utils/api";
 import { Link } from "react-router";
 
-async function fetchData(page: number, size: number) {
+async function fetchCandidates(page: number, size: number) {
   try {
     const voteId = new URLSearchParams(window.location.search).get("voteId");
     const response = await api.get("/v1/candidate/list/"+voteId, { params: { page, size } });
@@ -59,68 +60,10 @@ async function handleDelete(id: string) {
 
 export type Candidate = {
   id: string;
-  title: string;
+  question_id: string;
+  name: string;
   updated_at: string;
 };
-
-export const columns: ColumnDef<Candidate>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Title
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="lowercase">
-        <a 
-          href={`/backstage/candidate/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&candidateId=${row.getValue("id")}`} 
-          className="text-blue-500 hover:underline"
-          >
-          {row.getValue("title")}
-        </a>
-      </div>,
-  },
-  {
-    accessorKey: "updated_at",
-    header: () => <div className="text-center">Start Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("updated_at")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const candidate = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(candidate.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
 
 export default function CandidateIndex() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -133,10 +76,102 @@ export default function CandidateIndex() {
     total: 0,
     total_pages: 0,
   });
+  
+  const [questionsArray, setQuestionsArray] = React.useState<
+    { id: string; title: string }[]
+  >([]);
+
+  React.useEffect(() => {
+    fetchQuestions(1, 100).then((res) => {
+      const formattedQuestions = res.data.map((question: { id: string; title: string }) => ({
+        id: question.id,
+        title: question.title,
+      }));
+      setQuestionsArray(formattedQuestions);
+    });
+  }, []);
+
+  const questionMap = React.useMemo(() => {
+    return questionsArray.reduce((map, question) => {
+      map[question.id] = question.title;
+      return map;
+    }, {} as Record<string, string>);
+  }, [questionsArray]);
+
+  const columns: ColumnDef<Candidate>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "question_id",
+      header: "Question",
+      cell: ({ row }) => {
+        const questionId = row.getValue("question_id");
+        return <div className="capitalize">{questionMap[questionId as string] || "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Name
+          <ArrowUpDown />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="lowercase">
+          <a
+            href={`/backstage/candidate/update?voteId=${new URLSearchParams(window.location.search).get(
+              "voteId"
+            )}&candidateId=${row.getValue("id")}`}
+            className="text-blue-500 hover:underline"
+          >
+            {row.getValue("name")}
+          </a>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "updated_at",
+      header: () => <div className="text-center">Start Time</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {new Date(row.getValue("updated_at")).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const candidate = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDelete(candidate.id)}>
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   React.useEffect(() => {
     async function loadData() {
-      const response = await fetchData(pageIndex + 1, pageSize);
+      const response = await fetchCandidates(pageIndex + 1, pageSize);
       setData(response.data);
       setPagination(response.pagination);
     }
@@ -149,15 +184,15 @@ export default function CandidateIndex() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-    rowCount: pagination.total,
-    pageCount: pagination.total_pages,
+    // manualPagination: true,
+    // rowCount: pagination.total,
+    // pageCount: pagination.total_pages,
     getSortedRowModel: getSortedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
       columnVisibility,
-      pagination: { pageIndex, pageSize },
+      // pagination: { pageIndex, pageSize },
     },
   });
 
@@ -273,7 +308,7 @@ export default function CandidateIndex() {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
+        {/* <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
             Showing {pageIndex * pageSize + 1} to{" "}
             {Math.min((pageIndex + 1) * pageSize, pagination.total)} of{" "}
@@ -284,7 +319,7 @@ export default function CandidateIndex() {
             pageCount={pagination.total_pages}
             onPageChange={setPageIndex}
           />
-        </div>
+        </div> */}
       </div>
     </Layout>
   );

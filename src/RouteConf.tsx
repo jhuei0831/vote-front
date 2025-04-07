@@ -9,6 +9,7 @@ import QuestionIndex from '@/pages/backstage/question/Index'
 import QuestionCreate from '@/pages/backstage/question/Create'
 import CandidateIndex from '@/pages/backstage/candidate/Index'
 import CandidateCreate from '@/pages/backstage/candidate/Create'
+import PasswordIndex from '@/pages/backstage/password/Index'
 import { ProtectedRoute, RouteWithVoteId } from "@/router/ProtectedRoute"
 import { AuthProvider } from "@/context/AuthContext"
 
@@ -45,6 +46,7 @@ const routes = [
           { path: "/backstage/question/create", element: <QuestionCreate /> },
           { path: "/backstage/candidate", element: <CandidateIndex /> },
           { path: "/backstage/candidate/create", element: <CandidateCreate /> },
+          { path: "/backstage/password", element: <PasswordIndex /> },
         ],
       },
     ]
