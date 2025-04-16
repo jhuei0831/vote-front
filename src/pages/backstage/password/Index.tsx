@@ -53,6 +53,22 @@ async function fetchPasswords(page: number, size: number) {
   }
 }
 
+async function decryptPasswords(passwords: Password[]) {
+  try {
+    // 處理Password的資料，只取出password的值
+    const passwordsToDecrypt = passwords.map((password) => password.password);
+    
+    // 發送請求到後端進行解密
+    // 這裡假設後端的API是 /v1/password/decrypt
+    // 並且需要傳遞一個包含密碼的陣列
+    const response = await api.post("/v1/password/decrypt", passwordsToDecrypt);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
+
 async function handleDelete(id: string) {
   if (confirm("Are you sure you want to delete this password?")) {
     try {
@@ -66,7 +82,7 @@ async function handleDelete(id: string) {
   }
 }
 
-export function DialogPasswordCreate() {
+export function PasswordCreateDialog({ onSuccess }: { onSuccess: () => void }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -82,7 +98,7 @@ export function DialogPasswordCreate() {
             Create new password for this vote.
           </DialogDescription>
         </DialogHeader>
-        <PasswordCreate />
+        <PasswordCreate onSuccess={onSuccess} />
         <DialogFooter>
           <Button type="submit" form="password-create-form">Submit</Button>
         </DialogFooter>
@@ -108,7 +124,26 @@ export default function PasswordIndex() {
     total: 0,
     total_pages: 0,
   });
+  const [isDecrypting, setIsDecrypting] = React.useState(false);
+  const [decryptedPasswords, setDecryptedPasswords] = React.useState<Record<string, string>>({});
   
+  const refreshData = React.useCallback(async () => {
+    const response = await fetchPasswords(pageIndex + 1, pageSize);
+    setData(response.data);
+    setPagination(response.pagination);
+  }, [pageIndex, pageSize]);
+
+  const decryptPasswordsHandler = async () => {
+    setIsDecrypting(true);
+    const decrypted = await decryptPasswords(data);
+    setDecryptedPasswords(decrypted.data || {});
+    setIsDecrypting(false);
+  };
+
+  const clearDecryptedPasswords = () => {
+    setDecryptedPasswords({});
+  };
+
   const columns: ColumnDef<Password>[] = [
     {
       accessorKey: "id",
@@ -126,11 +161,16 @@ export default function PasswordIndex() {
           <ArrowUpDown />
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("password")}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const originalPassword = row.getValue("password") as string;
+        
+        // 查找解密後的密碼
+        const decryptedPassword = decryptedPasswords[originalPassword];
+        
+        return (
+          <div className="font-medium">{decryptedPassword || originalPassword}</div>
+        );
+      },
     },
     {
       accessorKey: "status",
@@ -170,12 +210,7 @@ export default function PasswordIndex() {
   ];
 
   React.useEffect(() => {
-    async function loadData() {
-      const response = await fetchPasswords(pageIndex + 1, pageSize);
-      setData(response.data);
-      setPagination(response.pagination);
-    }
-    loadData();
+    refreshData();
   }, [pageIndex, pageSize]);
 
   const table = useReactTable({
@@ -200,7 +235,24 @@ export default function PasswordIndex() {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
-          <DialogPasswordCreate />
+          <PasswordCreateDialog onSuccess={refreshData} />
+          
+          <Button 
+            variant="outline" 
+            className={`ml-2 ${Object.keys(decryptedPasswords).length !== 0 ? "text-amber-600" : ""}`}
+            onClick={Object.keys(decryptedPasswords).length !== 0 ? clearDecryptedPasswords : decryptPasswordsHandler}
+            disabled={isDecrypting || data.length === 0}
+          >
+            {isDecrypting ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin">⟳</span>
+                Decrypting...
+              </>
+            ) : (
+              Object.keys(decryptedPasswords).length !== 0 ? "Reset Display" : "Decrypt Passwords"
+            )}
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

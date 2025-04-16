@@ -12,7 +12,9 @@ import CandidateCreate from '@/pages/backstage/candidate/Create'
 import PasswordIndex from '@/pages/backstage/password/Index'
 import { ProtectedRoute, RouteWithVoteId } from "@/router/ProtectedRoute"
 import { AuthProvider } from "@/context/AuthContext"
-
+import VoterLogin from "@/pages/frontage/vote/VoterLogin"
+import Voting from "@/pages/frontage/vote/Voting"
+import NotFound from "@/pages/NotFonud"
 // 這就是比較推薦的做法，將所有的routes拆出來做統一的管理
 // 包含了每一層的從屬關係，都可以透過下列的表很清處的看到
 // 這裡我們可以嘗試使用react-router-dom 的 <Outlet>，來處理我們常駐在畫面的navbar
@@ -22,6 +24,8 @@ const routes = [
   { 
     children: [
       { path: "/login", element: <Login /> },
+      { path: "/vote/login/:vote_id", element: <VoterLogin /> },
+      { path: "/vote/start", element: <Voting /> },
     ]
   },
   {
@@ -50,6 +54,9 @@ const routes = [
         ],
       },
     ]
+  },
+  {
+    path: "*", element: <NotFound />
   }
 ]
 

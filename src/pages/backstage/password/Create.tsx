@@ -1,5 +1,4 @@
 import React from "react";
-import Layout from "@/components/backstage/BackLayout";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -8,9 +7,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { FormSchema } from "./Form";
 import PasswordForm from "./Form";
-import { format } from "path";
 
-export default function PasswordCreate() {
+interface PasswordCreateProps {
+  onSuccess?: () => void;
+}
+
+export default function PasswordCreate({ onSuccess }: PasswordCreateProps) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
@@ -38,6 +40,9 @@ export default function PasswordCreate() {
         setIsAlert(true);
         setVariant("success");
         setAlertDescription(res.data.msg);
+        
+        // 呼叫 onSuccess 來刷新父組件中的數據
+        if (onSuccess) onSuccess();
       })
       .catch((err) => {
         setIsAlert(true);

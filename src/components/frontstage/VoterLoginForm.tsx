@@ -1,0 +1,105 @@
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import api from "@/utils/api"
+import { useParams } from 'react-router'
+import { Vote } from "@/pages/backstage/vote/Index"
+import { Eye, EyeOff } from "lucide-react"
+
+export default function VoterLoginForm({className, ...props}: React.ComponentPropsWithoutRef<"div">) {
+  const [vote, setVote] = useState<Vote>({} as Vote)
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { vote_id } = useParams()
+  
+  // use api to get vote id
+  useEffect(() => {
+    const fetchVote = async () => {
+      try {
+        const response = await api.get("/v1/vote/"+vote_id)
+        setVote(response.data.data)
+      } catch (error) {
+        console.error("Error fetching vote ID:", error)
+      }
+    }
+
+    fetchVote()
+  }
+  , [])
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null) // 清除之前的錯誤訊息
+
+    try {
+      const response = await api.post("/v1/voter/login", {
+        vote_id: vote.id,
+        password: password,
+      })
+      console.log("Login successful:", response.data)
+      // 在這裡處理登入成功的邏輯，例如儲存 token 或跳轉頁面
+      window.location.href = "/vote/start"
+    } catch (err: any) {
+      console.error("Login failed:", err)
+      setError(err.response?.data?.message || "Login failed. Please try again.")
+    }
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">{vote.title}</CardTitle>
+          <CardDescription>{vote.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col gap-6">
+                <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={password.length > 0 && showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  {(
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      { showPassword ? <Eye /> : <EyeOff /> }
+                    </Button>
+                  )}
+                </div>
+                </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
