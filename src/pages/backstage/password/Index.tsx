@@ -40,8 +40,11 @@ import {
 } from "@/components/ui/dialog"
 import api from "@/utils/api";
 import PasswordCreate from "./Create";
+import PasswordStatus from "./Status";
 import Pagination from "@/components/Pagination";
+import { Checkbox } from "@/components/ui/checkbox";
 
+// 獲取密碼列表
 async function fetchPasswords(page: number, size: number) {
   try {
     const voteId = new URLSearchParams(window.location.search).get("voteId");
@@ -53,6 +56,7 @@ async function fetchPasswords(page: number, size: number) {
   }
 }
 
+// 解密密碼
 async function decryptPasswords(passwords: Password[]) {
   try {
     // 處理Password的資料，只取出password的值
@@ -69,6 +73,7 @@ async function decryptPasswords(passwords: Password[]) {
   }
 }
 
+// 刪除密碼
 async function handleDelete(id: string) {
   if (confirm("Are you sure you want to delete this password?")) {
     try {
@@ -107,6 +112,38 @@ export function PasswordCreateDialog({ onSuccess }: { onSuccess: () => void }) {
   )
 }
 
+export function PasswordChangeStatusDialog({
+  selections,
+  onSuccess,
+}: {
+  voteId: string;
+  selections: string[];
+  onSuccess: () => void;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Change Status</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Change Password Status</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to change the status of the selected passwords?
+          </DialogDescription>
+        </DialogHeader>
+        <PasswordStatus
+          selections={selections}
+          onSuccess={onSuccess}
+        />
+        <DialogFooter>
+          <Button type="submit" form="password-status-form">Confirm</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export type Password = {
   id: string;
   password: string;
@@ -124,6 +161,7 @@ export default function PasswordIndex() {
     total: 0,
     total_pages: 0,
   });
+  const [rowSelection, setRowSelection] = React.useState({})
   const [isDecrypting, setIsDecrypting] = React.useState(false);
   const [decryptedPasswords, setDecryptedPasswords] = React.useState<Record<string, string>>({});
   
@@ -145,6 +183,28 @@ export default function PasswordIndex() {
   };
 
   const columns: ColumnDef<Password>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "id",
       header: "ID",
@@ -177,7 +237,7 @@ export default function PasswordIndex() {
       header: () => <div className="text-center">Status</div>,
       cell: ({ row }) => (
         <div className="text-center font-medium">
-          {row.getValue("status") === "1" ? (
+          {row.getValue("status") === true ? (
             <span className="text-green-500">Active</span>
           ) : (
             <span className="text-red-500">Inactive</span>
@@ -212,7 +272,7 @@ export default function PasswordIndex() {
   React.useEffect(() => {
     refreshData();
   }, [pageIndex, pageSize]);
-
+  
   const table = useReactTable({
     data,
     columns,
@@ -224,18 +284,26 @@ export default function PasswordIndex() {
     pageCount: pagination.total_pages,
     getSortedRowModel: getSortedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    getRowId: row => row.id.toString(),
     state: {
       sorting,
       columnVisibility,
       pagination: { pageIndex, pageSize },
+      rowSelection,
     },
   });
-
+  console.log(rowSelection);
   return (
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
           <PasswordCreateDialog onSuccess={refreshData} />
+          <PasswordChangeStatusDialog
+            voteId={new URLSearchParams(window.location.search).get("voteId") || ""}
+            selections={Object.keys(rowSelection)}
+            onSuccess={refreshData}
+          />
           
           <Button 
             variant="outline" 
@@ -354,6 +422,10 @@ export default function PasswordIndex() {
               )}
             </TableBody>
           </Table>
+        </div>
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">

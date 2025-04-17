@@ -48,6 +48,8 @@ export default function VoterLoginForm({className, ...props}: React.ComponentPro
         password: password,
       })
       console.log("Login successful:", response.data)
+      // 紀錄vote_id
+      localStorage.setItem("vote_id", vote.id)
       // 在這裡處理登入成功的邏輯，例如儲存 token 或跳轉頁面
       window.location.href = "/vote/start"
     } catch (err: any) {

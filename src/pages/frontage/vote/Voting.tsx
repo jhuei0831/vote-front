@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Toaster, toast } from "sonner"
 import api from "@/utils/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { defineStepper } from "@/components/ui/stepper";
@@ -118,7 +119,7 @@ const CandidateTable = ({
 
   return (
     <div className="rounded-md border mt-4">
-      <div className="text-sm text-muted-foreground mb-2">
+      <div className="text-sm text-muted-foreground mx-2 mt-2">
         已選擇 {Object.keys(rowSelection || {}).length} 位候選人
       </div>
       <Table>
@@ -195,6 +196,30 @@ const StepContent = React.memo(({
 
   if (!currentQuestion) return null;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      const response = await api.post("/v1/voter/ballot/create", rowSelections)
+      console.log(response)
+      if (response.data.msg) {
+        toast.success("投票成功，將自動跳轉至首頁", {position: "top-right"})
+        // 5秒後跳轉至首頁
+        setTimeout(() => {
+          window.location.href = "/"
+        }, 5000)
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast.error("投票失敗: "+err.response.data.msg, {position: "top-right"})
+      // 登入過期，導向投票登入頁面
+      if (err.response.data.code === 100) {
+        var voteId = localStorage.getItem("vote_id")
+        window.location.href = "/vote/login/"+voteId
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <StepperPanel>
@@ -228,7 +253,7 @@ const StepContent = React.memo(({
           下一題
         </Button>
         {isLast && (
-          <Button variant="default">
+          <Button variant="default" onClick={handleSubmit}>
             提交投票
           </Button>
         )}
@@ -274,7 +299,13 @@ export default function Voting() {
     }));
   }, []);
 
-  // 定義 stepper
+  // 用 useMemo 只在 questions 變動時建立 stepper
+  const stepper = React.useMemo(() => {
+    return defineStepper(
+      ...questions.map(q => ({ id: q.id.toString(), title: q.title }))
+    );
+  }, [questions]);
+
   const {
     StepperProvider,
     StepperNavigation,
@@ -284,38 +315,40 @@ export default function Voting() {
     StepperPanel,
     StepperControls,
     useStepper,
-  } = defineStepper(
-    ...questions.map(q => ({ id: q.id.toString(), title: q.title }))
-  );
+  } = stepper;
 
-  if (questions.length === 0) {
+  if (questions.length === 0 || !currentStep) {
     return <div>載入中...</div>;
   }
 
   return (
-    <StepperProvider 
-      variant="horizontal" 
-      labelOrientation="vertical" 
-      className="w-full max-w-3xl mx-auto mt-4"
-    >
-      <div className="space-y-8">
-        <StepperNavigation>
-          {questions.map((question) => (
-            <StepperStep key={question.id} of={question.id.toString()}>
-              <StepperTitle>{question.title}</StepperTitle>
-            </StepperStep>
-          ))}
-        </StepperNavigation>
+    <>
+      <Toaster richColors />
+      <StepperProvider 
+        variant="horizontal" 
+        labelOrientation="vertical" 
+        className="w-full max-w-3xl mx-auto mt-4"
+        defaultValue={currentStep}
+      >
+        <div className="space-y-8">
+          <StepperNavigation>
+            {questions.map((question) => (
+              <StepperStep key={question.id} of={question.id.toString()}>
+                <StepperTitle>{question.title}</StepperTitle>
+              </StepperStep>
+            ))}
+          </StepperNavigation>
 
-        <StepContent 
-          questions={questions}
-          rowSelections={rowSelections}
-          onRowSelectionChange={handleRowSelectionChange}
-          useStepper={useStepper}
-          StepperPanel={StepperPanel}
-          StepperControls={StepperControls}
-        />
-      </div>
-    </StepperProvider>
+          <StepContent 
+            questions={questions}
+            rowSelections={rowSelections}
+            onRowSelectionChange={handleRowSelectionChange}
+            useStepper={useStepper}
+            StepperPanel={StepperPanel}
+            StepperControls={StepperControls}
+          />
+        </div>
+      </StepperProvider>
+    </>
   );
 }

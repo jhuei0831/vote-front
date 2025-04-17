@@ -23,17 +23,17 @@ import NotFound from "@/pages/NotFonud"
 const routes = [
   { 
     children: [
+      { path: "/", element: <FrontHome /> },
       { path: "/login", element: <Login /> },
       { path: "/vote/login/:vote_id", element: <VoterLogin /> },
       { path: "/vote/start", element: <Voting /> },
     ]
   },
-  {
-    element: <AuthProvider><ProtectedRoute /></AuthProvider>,
-    children: [
-      { path: "/", element: <FrontHome /> },
-    ]
-  },
+  // {
+  //   element: <AuthProvider><ProtectedRoute /></AuthProvider>,
+  //   children: [
+  //   ]
+  // },
   {
     path: "/backstage",
     element: <AuthProvider><ProtectedRoute /></AuthProvider>,
