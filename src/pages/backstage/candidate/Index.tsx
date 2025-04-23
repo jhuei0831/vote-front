@@ -32,11 +32,10 @@ import {
 import Pagination from "@/components/Pagination";
 import { fetchQuestions } from "@/pages/backstage/question/Index";
 import api from "@/utils/api";
-import { Link } from "react-router";
+import { Link, useParams } from "@tanstack/react-router";
 
-async function fetchCandidates(page: number, size: number) {
+async function fetchCandidates(voteId: string, page: number, size: number) {
   try {
-    const voteId = new URLSearchParams(window.location.search).get("voteId");
     const response = await api.get("/v1/candidate/list/"+voteId, { params: { page, size } });
     return response.data;
   } catch (err) {
@@ -65,7 +64,7 @@ export type Candidate = {
   updated_at: string;
 };
 
-export default function CandidateIndex() {
+export default function CandidateIndex({ voteId }: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -80,15 +79,19 @@ export default function CandidateIndex() {
   const [questionsArray, setQuestionsArray] = React.useState<
     { id: string; title: string }[]
   >([]);
-
+  // const { voteId } = useParams({ strict: false });
+  
   React.useEffect(() => {
-    fetchQuestions(1, 100).then((res) => {
-      const formattedQuestions = res.data.map((question: { id: string; title: string }) => ({
-        id: question.id,
-        title: question.title,
-      }));
-      setQuestionsArray(formattedQuestions);
-    });
+    // Only fetch questions if voteId is defined
+    if (voteId) {
+      fetchQuestions(voteId, 1, 100).then((res) => {
+        const formattedQuestions = res.data.map((question: { id: string; title: string }) => ({
+          id: question.id,
+          title: question.title,
+        }));
+        setQuestionsArray(formattedQuestions);
+      });
+    }
   }, []);
 
   const questionMap = React.useMemo(() => {
@@ -171,7 +174,7 @@ export default function CandidateIndex() {
 
   React.useEffect(() => {
     async function loadData() {
-      const response = await fetchCandidates(pageIndex + 1, pageSize);
+      const response = await fetchCandidates(voteId, pageIndex + 1, pageSize);
       setData(response.data);
       setPagination(response.pagination);
     }
@@ -200,7 +203,10 @@ export default function CandidateIndex() {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
-          <Link to={"/backstage/candidate/create?voteId=" + (new URLSearchParams(window.location.search).get('voteId'))}>
+          <Link 
+            to={`/backstage/candidate/$voteId/create`}
+            params={{ voteId: voteId || '' }}
+          >
             <Button variant="outline" className="mr-auto">
               <Plus />
               New Candidate

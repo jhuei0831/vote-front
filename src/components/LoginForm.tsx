@@ -1,5 +1,4 @@
 import { useState } from "react"
-import axios from "axios"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,11 +10,18 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useAuth, loginApi } from "@/utils/userAuth"
+import {
+  useRouter,
+} from '@tanstack/react-router'
+import { Link } from "@tanstack/react-router"
 
 export default function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const auth = useAuth()
+  const router = useRouter()
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -25,19 +31,13 @@ export default function LoginForm({
     setError(null) // 清除之前的錯誤訊息
 
     try {
-      const response = await axios.post(
-        "https://vote.oxtomato.com/v1/user/login",
-        {
-          account,
-          password,
-        },
-        {
-          withCredentials: true,
-        }
-      )
-      console.log("Login successful:", response.data)
+      // Call the login function and handle the result
+      await auth.login(account, password)
+      await router.invalidate()
+      // Login successful
+      console.log("Login successful")
       // 在這裡處理登入成功的邏輯，例如儲存 token 或跳轉頁面
-      window.location.href = "/"
+      // window.location.href = "/dashboard" // 導向儀表板頁面
     } catch (err: any) {
       console.error("Login failed:", err)
       setError(err.response?.data?.message || "Login failed. Please try again.")
@@ -50,7 +50,9 @@ export default function LoginForm({
         <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
             Login
-            <img src="/src/assets/imgs/qoo.png" width="40" alt="Qoo logo" className="inline-block" />
+            <Link to="/">
+              <img src="/src/assets/imgs/qoo.png" width="40" alt="Qoo logo" className="inline-block" />
+            </Link>
             </CardTitle>
           <CardDescription>
             Enter your email below to login to your account

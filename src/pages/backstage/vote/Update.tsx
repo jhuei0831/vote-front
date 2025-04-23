@@ -7,9 +7,10 @@ import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import VoteForm, { FormSchema } from "./Form";
+import { useParams } from "@tanstack/react-router";
 
 export default function VoteUpdate() {
-  const voteId = new URLSearchParams(window.location.search).get("voteId");
+  const { voteId } = useParams({strict: false});
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"

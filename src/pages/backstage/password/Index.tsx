@@ -45,9 +45,8 @@ import Pagination from "@/components/Pagination";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // 獲取密碼列表
-async function fetchPasswords(page: number, size: number) {
+async function fetchPasswords(voteId:string, page: number, size: number) {
   try {
-    const voteId = new URLSearchParams(window.location.search).get("voteId");
     const response = await api.get("/v1/password/list/"+voteId, { params: { page, size } });
     return response.data;
   } catch (err) {
@@ -87,7 +86,7 @@ async function handleDelete(id: string) {
   }
 }
 
-export function PasswordCreateDialog({ onSuccess }: { onSuccess: () => void }) {
+export function PasswordCreateDialog({ voteId, onSuccess }: { voteId: string; onSuccess: () => void }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -103,7 +102,7 @@ export function PasswordCreateDialog({ onSuccess }: { onSuccess: () => void }) {
             Create new password for this vote.
           </DialogDescription>
         </DialogHeader>
-        <PasswordCreate onSuccess={onSuccess} />
+        <PasswordCreate voteId={voteId} onSuccess={onSuccess} />
         <DialogFooter>
           <Button type="submit" form="password-create-form">Submit</Button>
         </DialogFooter>
@@ -113,6 +112,7 @@ export function PasswordCreateDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function PasswordChangeStatusDialog({
+  voteId,
   selections,
   onSuccess,
 }: {
@@ -133,6 +133,7 @@ export function PasswordChangeStatusDialog({
           </DialogDescription>
         </DialogHeader>
         <PasswordStatus
+          voteId={voteId}
           selections={selections}
           onSuccess={onSuccess}
         />
@@ -150,7 +151,7 @@ export type Password = {
   status: string;
 };
 
-export default function PasswordIndex() {
+export default function PasswordIndex({voteId}: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -166,7 +167,7 @@ export default function PasswordIndex() {
   const [decryptedPasswords, setDecryptedPasswords] = React.useState<Record<string, string>>({});
   
   const refreshData = React.useCallback(async () => {
-    const response = await fetchPasswords(pageIndex + 1, pageSize);
+    const response = await fetchPasswords(voteId, pageIndex + 1, pageSize);
     setData(response.data);
     setPagination(response.pagination);
   }, [pageIndex, pageSize]);
@@ -293,21 +294,21 @@ export default function PasswordIndex() {
       rowSelection,
     },
   });
-  console.log(rowSelection);
+
   return (
     <Layout>
       <div className="w-full">
-        <div className="flex items-center py-4">
-          <PasswordCreateDialog onSuccess={refreshData} />
+        <div className="flex items-center py-4 gap-2">
+          <PasswordCreateDialog voteId={voteId} onSuccess={refreshData} />
           <PasswordChangeStatusDialog
-            voteId={new URLSearchParams(window.location.search).get("voteId") || ""}
+            voteId={voteId}
             selections={Object.keys(rowSelection)}
             onSuccess={refreshData}
           />
           
           <Button 
             variant="outline" 
-            className={`ml-2 ${Object.keys(decryptedPasswords).length !== 0 ? "text-amber-600" : ""}`}
+            className={`${Object.keys(decryptedPasswords).length !== 0 ? "text-amber-600" : ""}`}
             onClick={Object.keys(decryptedPasswords).length !== 0 ? clearDecryptedPasswords : decryptPasswordsHandler}
             disabled={isDecrypting || data.length === 0}
           >

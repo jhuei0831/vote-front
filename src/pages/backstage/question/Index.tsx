@@ -31,11 +31,10 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
 import api from "@/utils/api";
-import { Link } from "react-router";
+import { Link, useParams } from "@tanstack/react-router";
 
-export async function fetchQuestions(page: number, size: number) {
+export async function fetchQuestions(voteId: string, page: number, size: number) {
   try {
-    const voteId = new URLSearchParams(window.location.search).get("voteId");
     const response = await api.get("/v1/question/list/"+voteId, { params: { page, size } });
     return response.data;
   } catch (err) {
@@ -133,15 +132,18 @@ export default function QuestionIndex() {
     total: 0,
     total_pages: 0,
   });
-
+  const { voteId } = useParams({ strict: false });
   React.useEffect(() => {
     async function loadData() {
-      const response = await fetchQuestions(pageIndex + 1, pageSize);
-      setData(response.data);
-      setPagination(response.pagination);
+      // Check if voteId is defined before fetching questions
+      if (voteId) {
+        const response = await fetchQuestions(voteId, pageIndex + 1, pageSize);
+        setData(response.data);
+        setPagination(response.pagination);
+      }
     }
     loadData();
-  }, [pageIndex, pageSize]);
+  }, [voteId, pageIndex, pageSize]);
 
   const table = useReactTable({
     data,
@@ -165,7 +167,10 @@ export default function QuestionIndex() {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4">
-          <Link to={"/backstage/question/create?voteId=" + (new URLSearchParams(window.location.search).get('voteId'))}>
+          <Link 
+            to="/backstage/question/$voteId/create"
+            params={{ voteId: voteId || '' }}
+          >
             <Button variant="outline" className="mr-auto">
               <Plus />
               New Question

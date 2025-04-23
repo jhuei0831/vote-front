@@ -1,9 +1,9 @@
 import { FC, useState } from 'react'
-import { Link } from 'react-router'
+import { Link } from '@tanstack/react-router'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useAuth } from '@/context/AuthContext'
-import { UserProfile } from '@/components/backstage/UserProfile'
+import { UserAction } from '@/components/backstage/UserAction'
+import { useAuth } from '@/utils/userAuth'
 
 const Navbar: FC = () => {
 
@@ -12,7 +12,7 @@ const Navbar: FC = () => {
   ]
   
   const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false)
-  const { isAuthorized } = useAuth();
+  const auth = useAuth()
 
   return (
       <header className="absolute inset-x-0 top-0 z-50">
@@ -45,8 +45,8 @@ const Navbar: FC = () => {
             ))}
           </div> */}
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            {isAuthorized ? (
-              <UserProfile />
+            {auth.isAuthenticated ? (
+              <UserAction auth={auth}  />
             ) : (
               <Link to="/login" className="text-sm/6 font-semibold text-gray-900">
                 Log in
@@ -97,8 +97,8 @@ const Navbar: FC = () => {
                   ))}
                 </div> */}
                 <div className="py-6">
-                  {isAuthorized ? (
-                    <UserProfile />
+                  {auth.isAuthenticated ? (
+                    <UserAction auth={auth} />
                   ) : (
                     <Link
                       to="/login"

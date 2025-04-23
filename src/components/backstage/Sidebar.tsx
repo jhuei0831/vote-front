@@ -1,6 +1,5 @@
 import * as React from "react"
 import { Vote } from "lucide-react"
-
 import {
   Sidebar,
   SidebarContent,
@@ -14,83 +13,88 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Link } from "react-router"
+import { Link, useParams, useRouterState } from "@tanstack/react-router"
 
-// check path is active
-function isActive(path: string) {
-  return path.includes(window.location.pathname)
-}
-
-// check if the URL contains "voteId"
-function hasVoteId() {
-  const params = new URLSearchParams(window.location.search)
-  return params.has("voteId")
-}
-
-// get Vote ID from URL Query
-function getVoteId() {
-  const params = new URLSearchParams(window.location.search)
-  return params.get("voteId")
-}
-
-const data = {
-  navMain: [
-    {
-      title: "投票管理",
-      url: "/vote",
-      items: [
-        {
-          title: "編輯",
-          url: "/vote/update" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-        {
-          title: "問題",
-          url: "/question" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-        {
-          title: "候選",
-          url: "/candidate" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-        {
-          title: "密碼",
-          url: "/password" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-        {
-          title: "選票",
-          url: "/ballot" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-        {
-          title: "計票",
-          url: "/count" + `?voteId=${getVoteId()}`,
-          visible: hasVoteId(),
-        },
-      ],
-    },
-    {
-      title: "設定",
-      url: "#",
-      items: [
-        {
-          title: "使用者資料",
-          url: "/backstage/user-profile",
-          visible: true,
-        },
-        {
-          title: "系統設定",
-          url: "/backstage/settings",
-          visible: true,
-        },
-      ],
-    },
-  ],
-}
-
+// 側邊欄元件
 export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // 使用選擇器以減少不必要的重新渲染
+  const pathname = useRouterState({ 
+    select: (s) => s.location.pathname 
+  })
+
+  // 只能在元件內部呼叫 useParams
+  const { voteId } = useParams({ strict: false })
+
+  // 檢查 URL 是否有 voteId
+  function hasVoteId() {
+    return voteId !== undefined && voteId !== null && voteId !== ""
+  }
+
+  // 導航資料，依賴 voteId
+  const data = {
+    navMain: [
+      {
+        title: "投票管理",
+        url: `${voteId == null ? "/" : `/vote/${voteId}`}`,
+        isActive: pathname === `/backstage/vote/${voteId}` || pathname === "/backstage",
+        items: [
+          {
+            title: "編輯",
+            url: `/vote/${voteId}/update`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/vote/${voteId}/update/`,
+          },
+          {
+            title: "問題",
+            url: `/question/${voteId}`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/question/${voteId}/`,
+          },
+          {
+            title: "候選",
+            url: `/candidate/${voteId}`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/candidate/${voteId}/`,
+          },
+          {
+            title: "密碼",
+            url: `/password/${voteId}`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/password/${voteId}`,
+          },
+          {
+            title: "選票",
+            url: `/ballot/${voteId}`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/ballot/${voteId}`,
+          },
+          {
+            title: "計票",
+            url: `/count/${voteId}`,
+            visible: hasVoteId(),
+            isActive: pathname === `/backstage/count/${voteId}`,
+          },
+        ],
+      },
+      {
+        title: "設定",
+        url: "#",
+        items: [
+          {
+            title: "使用者資料",
+            url: "/user-profile",
+            visible: true,
+          },
+          {
+            title: "系統設定",
+            url: "/settings",
+            visible: true,
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -110,13 +114,13 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
+        {/* <SidebarGroup> */}
           <SidebarMenu>
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  isActive={isActive("/backstage" + item.url)}
+                  isActive={item.isActive}
                 >
                   <a href={"/backstage" + item.url} className="font-medium">
                     {item.title}
@@ -128,7 +132,7 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild
-                          isActive={isActive("/backstage" + subItem.url)}
+                          isActive={item.isActive}
                         >
                           <Link
                             to={"/backstage" + subItem.url}
@@ -144,7 +148,7 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-        </SidebarGroup>
+        {/* </SidebarGroup> */}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

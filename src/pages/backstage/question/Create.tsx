@@ -7,6 +7,7 @@ import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import QuestionForm, { FormSchema } from "./Form";
+import { useParams } from "@tanstack/react-router";
 
 export default function QuestionCreate() {
   const [isAlert, setIsAlert] = React.useState(false);
@@ -22,11 +23,12 @@ export default function QuestionCreate() {
       description: "",
     },
   });
+  const { voteId } = useParams({ strict: false });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     api
       .post("/v1/question/create", {
-        vote_id: new URLSearchParams(window.location.search).get("voteId"),
+        vote_id: voteId,
         title: data.title,
         description: data.description,
       })

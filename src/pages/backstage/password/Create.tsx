@@ -9,10 +9,11 @@ import { FormSchema } from "./Form";
 import PasswordForm from "./Form";
 
 interface PasswordCreateProps {
+  voteId: string;
   onSuccess?: () => void;
 }
 
-export default function PasswordCreate({ onSuccess }: PasswordCreateProps) {
+export default function PasswordCreate({ voteId, onSuccess }: PasswordCreateProps) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
@@ -31,7 +32,7 @@ export default function PasswordCreate({ onSuccess }: PasswordCreateProps) {
   function onSubmit(data: z.infer<typeof FormSchema>) {
     api
       .post("/v1/password/create", {
-        vote_id: new URLSearchParams(window.location.search).get("voteId"),
+        vote_id: voteId,
         number: data.number,
         length: data.length,
         format: data.format,

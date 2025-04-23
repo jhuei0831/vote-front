@@ -1,13 +1,10 @@
 import Navbar from '../../components/frontstage/Navbar'
-import { AuthProvider } from '@/context/AuthContext';
 
-export function Home() {
+export default function Home() {
 
   return (
     <div className="bg-white">
-      <AuthProvider>
-        <Navbar />
-      </AuthProvider>
+      <Navbar />
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div
           aria-hidden="true"

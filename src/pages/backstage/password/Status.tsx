@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 
 type PasswordStatusProps = {
+  voteId: string;
   selections: {};
   onSuccess?: () => void;
 };
@@ -63,7 +64,7 @@ export function PasswordStatusForm({ form, onSubmit }: FormProps) {
   )
 }
 
-export default function PasswordStatus({ onSuccess, selections }: PasswordStatusProps) {
+export default function PasswordStatus({ voteId, onSuccess, selections }: PasswordStatusProps) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
@@ -80,7 +81,7 @@ export default function PasswordStatus({ onSuccess, selections }: PasswordStatus
   function onSubmit(data: z.infer<typeof FormSchema>) {
     api
       .put("/v1/password/update-status", {
-        VoteId: new URLSearchParams(window.location.search).get("voteId"),
+        VoteId: voteId,
         Passwords: selections,
         Status: data.status,
       })

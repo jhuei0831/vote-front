@@ -9,7 +9,7 @@ import { AlertCircle } from "lucide-react";
 import { FormSchema } from "./Form";
 import CandidateForm from "./Form";
 
-export default function QuestionCreate() {
+export default function CandidateCreate({ voteId }: { voteId: string }) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
@@ -49,7 +49,7 @@ export default function QuestionCreate() {
         <AlertTitle>Message</AlertTitle>
         <AlertDescription>{alertDescription}</AlertDescription>
       </Alert>
-      <CandidateForm form={form} onSubmit={onSubmit} />
+      <CandidateForm voteId={voteId} form={form} onSubmit={onSubmit} />
     </Layout>
   );
 }

@@ -31,16 +31,17 @@ export const FormSchema = z
   })
 
 type FormProps = {
+  voteId: string;
   form: UseFormReturn<z.infer<typeof FormSchema>>;
   onSubmit: (data: z.infer<typeof FormSchema>) => void;
 };
 
-export default function CandidateForm({ form, onSubmit }: FormProps) {
+export default function CandidateForm({ voteId, form, onSubmit }: FormProps) {
 
   const [questions, setQuestions] = React.useState<{ id: string; title: string }[]>([]);
 
   React.useEffect(() => {
-    fetchQuestions(1, 100).then((res) => {
+    fetchQuestions(voteId, 1, 100).then((res) => {
       const formattedQuestions = res.data.map((question: any) => ({
         id: question.id,
         title: question.title,
