@@ -30,98 +30,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
-import api from "@/utils/api";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { Question, fetchQuestions, handleDelete } from "@/utils/question";
 
-export async function fetchQuestions(voteId: string, page: number, size: number) {
-  try {
-    const response = await api.get("/v1/question/list/"+voteId, { params: { page, size } });
-    return response.data;
-  } catch (err) {
-    console.error(err);
-    return { data: [], pagination: { total: 0, total_pages: 0 } };
-  }
-}
-
-async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this question?")) {
-    try {
-      const response = await api.delete(`/v1/question/`, { data: [id] });
-      alert(response.data.msg);
-      window.location.reload();
-    } catch (err) {
-      alert("Failed to delete question.");
-      console.log(err);
-    }
-  }
-}
-
-export type Question = {
-  id: string;
-  title: string;
-  updated_at: string;
-};
-
-export const columns: ColumnDef<Question>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Title
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="lowercase">
-        <a 
-          href={`/backstage/question/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&questionId=${row.getValue("id")}`} 
-          className="text-blue-500 hover:underline"
-          >
-          {row.getValue("title")}
-        </a>
-      </div>,
-  },
-  {
-    accessorKey: "updated_at",
-    header: () => <div className="text-center">Start Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("updated_at")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const question = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(question.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-export default function QuestionIndex() {
+export default function QuestionIndex({voteId}: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -132,7 +44,7 @@ export default function QuestionIndex() {
     total: 0,
     total_pages: 0,
   });
-  const { voteId } = useParams({ strict: false });
+  
   React.useEffect(() => {
     async function loadData() {
       // Check if voteId is defined before fetching questions
@@ -144,6 +56,65 @@ export default function QuestionIndex() {
     }
     loadData();
   }, [voteId, pageIndex, pageSize]);
+
+  const columns: ColumnDef<Question>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "title",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Title
+          <ArrowUpDown />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="lowercase">
+          <a 
+            href={`/backstage/question/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&questionId=${row.getValue("id")}`} 
+            className="text-blue-500 hover:underline"
+            >
+            {row.getValue("title")}
+          </a>
+        </div>,
+    },
+    {
+      accessorKey: "updated_at",
+      header: () => <div className="text-center">Start Time</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {new Date(row.getValue("updated_at")).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const question = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDelete(question.id)}>
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data,

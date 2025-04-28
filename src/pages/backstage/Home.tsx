@@ -30,113 +30,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
-import api from "@/utils/api";
 import { Link } from "@tanstack/react-router";
-
-async function fetchData(page: number, size: number) {
-  try {
-    const response = await api.get("/v1/vote/list", { params: { page, size } });
-    return response.data;
-  } catch (err) {
-    console.error(err);
-    return { data: [], pagination: { total: 0, total_pages: 0 } };
-  }
-}
-
-async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this vote?")) {
-    try {
-      const response = await api.delete(`/v1/vote/`, { data: [id] });
-      alert(response.data.msg);
-      window.location.reload();
-    } catch (err) {
-      alert("Failed to delete vote.");
-      console.log(err);
-    }
-  }
-}
-
-export type Vote = {
-  id: string;
-  title: string;
-  description: string;
-  start_time: string;
-  end_time: string;
-};
-
-export const columns: ColumnDef<Vote>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Title
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="lowercase">
-        <a 
-          href={`/backstage/vote/${row.getValue("id")}`} 
-          className="text-blue-500 hover:underline"
-          >
-          {row.getValue("title")}
-        </a>
-      </div>,
-  },
-  {
-    accessorKey: "start_time",
-    header: () => <div className="text-center">Start Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("start_time")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "end_time",
-    header: () => <div className="text-center">End Time</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {new Date(row.getValue("end_time")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const vote = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(vote.id)}>
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(vote.id)}
-            >
-              Copy Vote ID
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+import { Vote, useVoteById, fetchVotes, handleDelete } from "@/utils/vote";
 
 export default function Home() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -149,15 +44,105 @@ export default function Home() {
     total: 0,
     total_pages: 0,
   });
+  const [selectedVoteId, setSelectedVoteId] = React.useState('');
+  const {data: vote} = useVoteById(selectedVoteId);
+
+  function handleVoteClick(id: string) {
+    setSelectedVoteId(id);
+    // Use the proper route param format for TanStack Router
+    window.location.href = `/backstage/vote/${id}`;
+  }
 
   React.useEffect(() => {
     async function loadData() {
-      const response = await fetchData(pageIndex + 1, pageSize);
+      const response = await fetchVotes(pageIndex + 1, pageSize);
       setData(response.data);
       setPagination(response.pagination);
     }
     loadData();
   }, [pageIndex, pageSize]);
+
+  const columns: ColumnDef<Vote>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "title",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Title
+          <ArrowUpDown />
+        </Button>
+      ),
+      cell: ({ row }) => 
+        <div>
+          <span 
+            onClick={() => handleVoteClick(row.getValue("id"))} 
+            className="text-blue-500 hover:underline cursor-pointer"
+            style={
+              vote?.id === row.getValue("id")
+                ? {
+                    fontWeight: 'bold',
+                  }
+                : {}
+            }
+          >
+            {row.getValue("title")}
+          </span>
+        </div>,
+    },
+    {
+      accessorKey: "start_time",
+      header: () => <div className="text-center">Start Time</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {new Date(row.getValue("start_time")).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "end_time",
+      header: () => <div className="text-center">End Time</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {new Date(row.getValue("end_time")).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const vote = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDelete(vote.id)}>
+                Delete
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(vote.id)}
+              >
+                Copy Vote ID
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data,

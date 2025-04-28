@@ -7,15 +7,12 @@ import {
   ReceiptRefundIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
-import { useParams } from "@tanstack/react-router";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function Index() {
-  const { voteId } = useParams({strict: false});
-
+export default function Index({voteId}: {voteId: string}) {
   const actions = [
     {
       title: '編輯投票設定',

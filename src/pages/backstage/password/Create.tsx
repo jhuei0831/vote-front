@@ -4,16 +4,50 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { FormSchema } from "./Form";
-import PasswordForm from "./Form";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AlertCircle, Plus } from "lucide-react";
+import { PasswordForm, FormSchema } from "@/pages/backstage/password/Form";
 
 interface PasswordCreateProps {
   voteId: string;
   onSuccess?: () => void;
 }
 
-export default function PasswordCreate({ voteId, onSuccess }: PasswordCreateProps) {
+export function PasswordCreateDialog({ voteId, onSuccess }: { voteId: string; onSuccess: () => void }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Plus />
+          New Password
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>New Password</DialogTitle>
+          <DialogDescription>
+            Create new password for this vote.
+          </DialogDescription>
+        </DialogHeader>
+        <PasswordCreate voteId={voteId} onSuccess={onSuccess} />
+        <DialogFooter>
+          <Button type="submit" form="password-create-form">Submit</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function PasswordCreate({ voteId, onSuccess }: PasswordCreateProps) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"

@@ -38,78 +38,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import api from "@/utils/api";
-import PasswordCreate from "./Create";
-import PasswordStatus from "./Status";
+import { PasswordCreateDialog} from "@/pages/backstage/password/Create";
+import PasswordStatus from "@/pages/backstage/password/Status";
 import Pagination from "@/components/Pagination";
 import { Checkbox } from "@/components/ui/checkbox";
-
-// 獲取密碼列表
-async function fetchPasswords(voteId:string, page: number, size: number) {
-  try {
-    const response = await api.get("/v1/password/list/"+voteId, { params: { page, size } });
-    return response.data;
-  } catch (err) {
-    console.error(err);
-    return { data: [], pagination: { total: 0, total_pages: 0 } };
-  }
-}
-
-// 解密密碼
-async function decryptPasswords(passwords: Password[]) {
-  try {
-    // 處理Password的資料，只取出password的值
-    const passwordsToDecrypt = passwords.map((password) => password.password);
-    
-    // 發送請求到後端進行解密
-    // 這裡假設後端的API是 /v1/password/decrypt
-    // 並且需要傳遞一個包含密碼的陣列
-    const response = await api.post("/v1/password/decrypt", passwordsToDecrypt);
-    return response.data;
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-}
-
-// 刪除密碼
-async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this password?")) {
-    try {
-      const response = await api.delete(`/v1/password/`, { data: [id] });
-      alert(response.data.msg);
-      window.location.reload();
-    } catch (err) {
-      alert("Failed to delete password.");
-      console.log(err);
-    }
-  }
-}
-
-export function PasswordCreateDialog({ voteId, onSuccess }: { voteId: string; onSuccess: () => void }) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus />
-          New Password
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>New Password</DialogTitle>
-          <DialogDescription>
-            Create new password for this vote.
-          </DialogDescription>
-        </DialogHeader>
-        <PasswordCreate voteId={voteId} onSuccess={onSuccess} />
-        <DialogFooter>
-          <Button type="submit" form="password-create-form">Submit</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import { Password, fetchPasswords, decryptPasswords, handleDelete } from "@/utils/password";
 
 export function PasswordChangeStatusDialog({
   voteId,
@@ -144,12 +77,6 @@ export function PasswordChangeStatusDialog({
     </Dialog>
   )
 }
-
-export type Password = {
-  id: string;
-  password: string;
-  status: string;
-};
 
 export default function PasswordIndex({voteId}: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);

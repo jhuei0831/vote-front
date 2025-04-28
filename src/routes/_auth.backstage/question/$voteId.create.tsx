@@ -4,5 +4,10 @@ import { createFileRoute } from '@tanstack/react-router'
 export const Route = createFileRoute(
   '/_auth/backstage/question/$voteId/create',
 )({
-  component: QuestionCreate,
+  component: RouteComponent,
 })
+
+function RouteComponent() {
+  const { voteId } = Route.useParams()
+  return <QuestionCreate voteId={voteId} />
+}

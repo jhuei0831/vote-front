@@ -30,9 +30,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
-import { fetchQuestions } from "@/pages/backstage/question/Index";
+import { fetchQuestions } from "@/utils/question";
 import api from "@/utils/api";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
 async function fetchCandidates(voteId: string, page: number, size: number) {
   try {

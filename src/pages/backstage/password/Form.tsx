@@ -10,15 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-const formatOptions = [
-  { value: "int", label: "Number" },
-  { value: "en",  label: "Symbol" },
-  { value: "mix", label: "Number + Symbol" },
-  { value: "mixExcl", label: "Number + Symbol(exclude special)" },
-  { value: "mixLower", label: "Number + Symbol(Lowercase exclude special)" },
-  { value: "mixUpper", label: "Number + Symbol(Uppercase exclude special)" },
-];
+import { formatOptions } from "@/utils/password";
 
 export const FormSchema = z
   .object({
@@ -36,7 +28,7 @@ type FormProps = {
   onSubmit: (data: z.infer<typeof FormSchema>) => void;
 };
 
-export default function PasswordForm({ form, onSubmit }: FormProps) {
+export function PasswordForm({ form, onSubmit }: FormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" id="password-create-form">

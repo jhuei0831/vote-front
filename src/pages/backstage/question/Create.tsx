@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import QuestionForm, { FormSchema } from "./Form";
-import { useParams } from "@tanstack/react-router";
+import QuestionForm, { FormSchema } from "@/pages/backstage/question/Form";
 
-export default function QuestionCreate() {
+export default function QuestionCreate({voteId}: { voteId: string }) {
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
@@ -23,7 +22,6 @@ export default function QuestionCreate() {
       description: "",
     },
   });
-  const { voteId } = useParams({ strict: false });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     api

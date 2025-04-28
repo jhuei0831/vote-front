@@ -29,7 +29,8 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
   function hasVoteId() {
     return voteId !== undefined && voteId !== null && voteId !== ""
   }
-
+  console.log(pathname === `/backstage/vote/${voteId}/update/`);
+  
   // 導航資料，依賴 voteId
   const data = {
     navMain: [
@@ -84,11 +85,13 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
             title: "使用者資料",
             url: "/user-profile",
             visible: true,
+            isActive: pathname === "/backstage/user-profile",
           },
           {
             title: "系統設定",
             url: "/settings",
             visible: true,
+            isActive: pathname === "/backstage/settings",
           },
         ],
       },
@@ -132,7 +135,7 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild
-                          isActive={item.isActive}
+                          isActive={subItem.isActive}
                         >
                           <Link
                             to={"/backstage" + subItem.url}

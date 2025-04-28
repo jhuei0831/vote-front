@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import VoteForm, { FormSchema } from "./Form";
+import VoteForm, { FormSchema } from "@/pages/backstage/vote/Form";
 
 export default function VoteCreate() {
   const [isAlert, setIsAlert] = React.useState(false);

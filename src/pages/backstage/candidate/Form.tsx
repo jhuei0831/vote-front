@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { fetchQuestions } from "@/pages/backstage/question/Index";
+import { fetchQuestions } from "@/utils/question";
 import React from "react";
 
 export const FormSchema = z
