@@ -1,4 +1,4 @@
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import * as React from "react";
 import {
   ColumnDef,
@@ -29,54 +29,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+
 import { PasswordCreateDialog} from "@/pages/backstage/password/Create";
-import PasswordStatus from "@/pages/backstage/password/Status";
+import PasswordChangeStatusDialog from "@/pages/backstage/password/Status";
 import Pagination from "@/components/Pagination";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Password, fetchPasswords, decryptPasswords, handleDelete } from "@/utils/password";
-
-export function PasswordChangeStatusDialog({
-  voteId,
-  selections,
-  onSuccess,
-}: {
-  voteId: string;
-  selections: string[];
-  onSuccess: () => void;
-}) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Change Status</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Change Password Status</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to change the status of the selected passwords?
-          </DialogDescription>
-        </DialogHeader>
-        <PasswordStatus
-          voteId={voteId}
-          selections={selections}
-          onSuccess={onSuccess}
-        />
-        <DialogFooter>
-          <Button type="submit" form="password-status-form">Confirm</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import { Password, useDecryptPasswords, handleDelete, usePasswords } from "@/utils/password";
 
 export default function PasswordIndex({voteId}: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -90,24 +48,31 @@ export default function PasswordIndex({voteId}: { voteId: string }) {
     total_pages: 0,
   });
   const [rowSelection, setRowSelection] = React.useState({})
-  const [isDecrypting, setIsDecrypting] = React.useState(false);
-  const [decryptedPasswords, setDecryptedPasswords] = React.useState<Record<string, string>>({});
+  const {data: passwordsData} = usePasswords(voteId, pageIndex + 1, pageSize);
   
-  const refreshData = React.useCallback(async () => {
-    const response = await fetchPasswords(voteId, pageIndex + 1, pageSize);
-    setData(response.data);
-    setPagination(response.pagination);
-  }, [pageIndex, pageSize]);
+  React.useEffect(() => {
+    if (passwordsData) {
+      setData(passwordsData.data);
+      setPagination(passwordsData.pagination);
+    }
+  }, [passwordsData]);
 
-  const decryptPasswordsHandler = async () => {
-    setIsDecrypting(true);
-    const decrypted = await decryptPasswords(data);
-    setDecryptedPasswords(decrypted.data || {});
-    setIsDecrypting(false);
-  };
+  // 使用 useDecryptPasswords hook 來解密密碼
+  const {
+    data: decryptedData,
+    isFetching: isDecrypting,
+  } = useDecryptPasswords(data);
 
-  const clearDecryptedPasswords = () => {
-    setDecryptedPasswords({});
+  // 本地狀態用於記錄是否顯示解密後的密碼
+  const [showDecrypted, setShowDecrypted] = React.useState(false);
+
+  // 切換顯示解密密碼
+  const handleDecryptToggle = () => {
+    if (showDecrypted) {
+      setShowDecrypted(false);
+    } else {
+      setShowDecrypted(true);
+    }
   };
 
   const columns: ColumnDef<Password>[] = [
@@ -151,12 +116,13 @@ export default function PasswordIndex({voteId}: { voteId: string }) {
       ),
       cell: ({ row }) => {
         const originalPassword = row.getValue("password") as string;
-        
-        // 查找解密後的密碼
+        // 取得解密後的密碼
+        const decryptedPasswords: Record<string, string> = decryptedData?.data || {};
         const decryptedPassword = decryptedPasswords[originalPassword];
-        
         return (
-          <div className="font-medium">{decryptedPassword || originalPassword}</div>
+          <div className="font-medium">
+            {showDecrypted && decryptedPassword ? decryptedPassword : originalPassword}
+          </div>
         );
       },
     },
@@ -196,10 +162,6 @@ export default function PasswordIndex({voteId}: { voteId: string }) {
       },
     },
   ];
-
-  React.useEffect(() => {
-    refreshData();
-  }, [pageIndex, pageSize]);
   
   const table = useReactTable({
     data,
@@ -226,17 +188,18 @@ export default function PasswordIndex({voteId}: { voteId: string }) {
     <Layout>
       <div className="w-full">
         <div className="flex items-center py-4 gap-2">
-          <PasswordCreateDialog voteId={voteId} onSuccess={refreshData} />
+          <PasswordCreateDialog voteId={voteId} pageIndex={pageIndex} pageSize={pageSize}  />
           <PasswordChangeStatusDialog
             voteId={voteId}
             selections={Object.keys(rowSelection)}
-            onSuccess={refreshData}
+            pageIndex={pageIndex}
+            pageSize={pageSize}
           />
           
-          <Button 
-            variant="outline" 
-            className={`${Object.keys(decryptedPasswords).length !== 0 ? "text-amber-600" : ""}`}
-            onClick={Object.keys(decryptedPasswords).length !== 0 ? clearDecryptedPasswords : decryptPasswordsHandler}
+          <Button
+            variant="outline"
+            className={showDecrypted ? "text-amber-600" : ""}
+            onClick={handleDecryptToggle}
             disabled={isDecrypting || data.length === 0}
           >
             {isDecrypting ? (
@@ -245,7 +208,7 @@ export default function PasswordIndex({voteId}: { voteId: string }) {
                 Decrypting...
               </>
             ) : (
-              Object.keys(decryptedPasswords).length !== 0 ? "Reset Display" : "Decrypt Passwords"
+              showDecrypted ? "Reset Display" : "Decrypt Passwords"
             )}
           </Button>
           

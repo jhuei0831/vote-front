@@ -1,7 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@headlessui/react";
+import ActionButtons from "@/components/ActionButtons";
 
 export const FormSchema = z
   .object({
@@ -25,9 +25,10 @@ export const FormSchema = z
 type FormProps = {
   form: UseFormReturn<z.infer<typeof FormSchema>>;
   onSubmit: (data: z.infer<typeof FormSchema>) => void;
+  voteId: string;
 };
 
-export default function QuestionForm({ form, onSubmit }: FormProps) {
+export default function QuestionForm({ form, onSubmit, voteId }: FormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -63,7 +64,7 @@ export default function QuestionForm({ form, onSubmit }: FormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <ActionButtons save back backTo={`/backstage/question/${voteId}`} />
       </form>
     </Form>
   );

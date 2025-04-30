@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

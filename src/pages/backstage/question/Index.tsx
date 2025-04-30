@@ -1,4 +1,4 @@
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import * as React from "react";
 import {
   ColumnDef,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
 import { Link } from "@tanstack/react-router";
-import { Question, fetchQuestions, handleDelete } from "@/utils/question";
+import { Question, handleDelete, useQuestions } from "@/utils/question";
 
 export default function QuestionIndex({voteId}: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -45,17 +45,20 @@ export default function QuestionIndex({voteId}: { voteId: string }) {
     total_pages: 0,
   });
   
+  // Import React Query hooks
+
+  // Use React Query to fetch questions
+  const {
+    data: questionsData
+  } = useQuestions(voteId, pageIndex, pageSize);
+
+  // Update local state when query data changes
   React.useEffect(() => {
-    async function loadData() {
-      // Check if voteId is defined before fetching questions
-      if (voteId) {
-        const response = await fetchQuestions(voteId, pageIndex + 1, pageSize);
-        setData(response.data);
-        setPagination(response.pagination);
-      }
+    if (questionsData) {
+      setData(questionsData.data);
+      setPagination(questionsData.pagination);
     }
-    loadData();
-  }, [voteId, pageIndex, pageSize]);
+  }, [questionsData]);
 
   const columns: ColumnDef<Question>[] = [
     {

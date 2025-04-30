@@ -1,7 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -19,8 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { fetchQuestions } from "@/utils/question";
+import { useQuestions } from "@/utils/question";
 import React from "react";
+import ActionButtons from "@/components/ActionButtons";
 
 export const FormSchema = z
   .object({
@@ -39,16 +39,17 @@ type FormProps = {
 export default function CandidateForm({ voteId, form, onSubmit }: FormProps) {
 
   const [questions, setQuestions] = React.useState<{ id: string; title: string }[]>([]);
-
+  const {data: questionsData} = useQuestions(voteId, 0, Number.MAX_SAFE_INTEGER);
+  
   React.useEffect(() => {
-    fetchQuestions(voteId, 1, 100).then((res) => {
-      const formattedQuestions = res.data.map((question: any) => ({
+    if (questionsData) {
+      const formattedQuestions = questionsData.data.map((question: any) => ({
         id: question.id,
         title: question.title,
       }));
       setQuestions(formattedQuestions);
-    });
-  }, []);
+    }
+  }, [questionsData]);
   
   return (
     <Form {...form}>
@@ -91,7 +92,7 @@ export default function CandidateForm({ voteId, form, onSubmit }: FormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <ActionButtons save back backTo={`/backstage/candidate/${voteId}`} />
       </form>
     </Form>
   );

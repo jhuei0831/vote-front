@@ -2,10 +2,19 @@ import React from "react";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import api from "@/utils/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -15,11 +24,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useUpdatePasswordStatus } from "@/utils/password";
+import { useQueryClient } from "@tanstack/react-query";
 
 type PasswordStatusProps = {
   voteId: string;
-  selections: {};
-  onSuccess?: () => void;
+  selections: string[];
+  pageIndex: number;
+  pageSize: number;
 };
 
 export const FormSchema = z
@@ -64,12 +76,14 @@ export function PasswordStatusForm({ form, onSubmit }: FormProps) {
   )
 }
 
-export default function PasswordStatus({ voteId, onSuccess, selections }: PasswordStatusProps) {
+export function PasswordStatus({ voteId, selections, pageIndex, pageSize }: PasswordStatusProps) {
+  const queryClient = useQueryClient();
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
     "default" | "destructive" | "info" | "success" | "warning"
   >("default");
   const [alertDescription, setAlertDescription] = React.useState("");
+  const updateStatusMutation = useUpdatePasswordStatus();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -79,25 +93,35 @@ export default function PasswordStatus({ voteId, onSuccess, selections }: Passwo
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    api
-      .put("/v1/password/update-status", {
+    if (selections.length === 0) {
+      setIsAlert(true);
+      setVariant("destructive");
+      setAlertDescription("Please select at least one password.");
+      return;
+    }
+    updateStatusMutation.mutate(
+      {
         VoteId: voteId,
         Passwords: selections,
         Status: data.status,
-      })
-      .then((res) => {
-        setIsAlert(true);
-        setVariant("success");
-        setAlertDescription(res.data.msg);
-
-        // 呼叫 onSuccess 來刷新父組件中的數據
-        if (onSuccess) onSuccess();
-      })
-      .catch((err) => {
-        setIsAlert(true);
-        setVariant("destructive");
-        setAlertDescription(err.response.data.msg);
-      });
+      },
+      {
+        onSuccess: (res: any) => {
+          setIsAlert(true);
+          setVariant("success");
+          setAlertDescription(res.msg);
+          // 重新取得密碼列表資料
+          queryClient.invalidateQueries({
+            queryKey: ["passwords", voteId, pageIndex + 1, pageSize],
+          });
+        },
+        onError: (err: any) => {
+          setIsAlert(true);
+          setVariant("destructive");
+          setAlertDescription(err?.response?.data?.msg || "Update password status failed");
+        },
+      }
+    )
   }
 
   return (
@@ -110,4 +134,36 @@ export default function PasswordStatus({ voteId, onSuccess, selections }: Passwo
       <PasswordStatusForm form={form} onSubmit={onSubmit} />
     </>
   );
+}
+
+export default function PasswordChangeStatusDialog({
+  voteId,
+  selections,
+  pageIndex,
+  pageSize,
+}: PasswordStatusProps) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Change Status</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Change Password Status</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to change the status of the selected passwords?
+          </DialogDescription>
+        </DialogHeader>
+        <PasswordStatus
+          voteId={voteId}
+          selections={selections}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+        />
+        <DialogFooter>
+          <Button type="submit" form="password-status-form">Confirm</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

@@ -1,4 +1,4 @@
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import {
   AcademicCapIcon,
   BanknotesIcon,

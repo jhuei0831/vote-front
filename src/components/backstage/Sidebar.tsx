@@ -29,7 +29,6 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
   function hasVoteId() {
     return voteId !== undefined && voteId !== null && voteId !== ""
   }
-  console.log(pathname === `/backstage/vote/${voteId}/update/`);
   
   // 導航資料，依賴 voteId
   const data = {
@@ -43,19 +42,19 @@ export function BackSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
             title: "編輯",
             url: `/vote/${voteId}/update`,
             visible: hasVoteId(),
-            isActive: pathname === `/backstage/vote/${voteId}/update/`,
+            isActive: pathname === `/backstage/vote/${voteId}/update`,
           },
           {
             title: "問題",
             url: `/question/${voteId}`,
             visible: hasVoteId(),
-            isActive: pathname === `/backstage/question/${voteId}/`,
+            isActive: pathname === `/backstage/question/${voteId}`,
           },
           {
             title: "候選",
             url: `/candidate/${voteId}`,
             visible: hasVoteId(),
-            isActive: pathname === `/backstage/candidate/${voteId}/`,
+            isActive: pathname === `/backstage/candidate/${voteId}`,
           },
           {
             title: "密碼",

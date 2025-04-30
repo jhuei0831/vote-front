@@ -1,13 +1,12 @@
 import React from "react";
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import api from "@/utils/api";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { FormSchema } from "./Form";
 import CandidateForm from "./Form";
+import AlertMessage from "@/components/AlertMessage";
+import { useCreateCandidate } from "@/utils/candidate";
 
 export default function CandidateCreate({ voteId }: { voteId: string }) {
   const [isAlert, setIsAlert] = React.useState(false);
@@ -23,32 +22,41 @@ export default function CandidateCreate({ voteId }: { voteId: string }) {
     },
   });
 
+  // 使用自定義 hook 來建立候選名單
+  const createCandidateMutation = useCreateCandidate();
+
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    api
-      .post("/v1/candidate/create", {
-        question_id: parseInt(data.question_id, 10),
+    // 呼叫 useCreateCandidate 的 mutate 方法
+    createCandidateMutation.mutate(  
+      {
+        question_id: data.question_id,
         name: data.name,
-      })
-      .then((res) => {
-        setIsAlert(true);
-        setVariant("success");
-        setAlertDescription(res.data.msg);
-        form.reset();
-      })
-      .catch((err) => {
-        setIsAlert(true);
-        setVariant("destructive");
-        setAlertDescription(err.response.data.msg);
-      });
+      },
+      {
+        onSuccess: (res: any) => {
+          setIsAlert(true);
+          setVariant("success");
+          setAlertDescription(res.msg);
+          form.reset();
+        },
+        onError: (err: any) => {
+          setIsAlert(true);
+          setVariant("destructive");
+          setAlertDescription(err?.response?.data?.msg || "建立失敗");
+        },
+      }
+    );
   }
 
   return (
     <Layout>
-      <Alert variant={variant} className={isAlert ? "" : "hidden"} onClose={() => setIsAlert(false)}>
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Message</AlertTitle>
-        <AlertDescription>{alertDescription}</AlertDescription>
-      </Alert>
+      {/* 警示訊息區塊 */}
+      <AlertMessage
+        variant={variant}
+        isOpen={isAlert}
+        description={alertDescription}
+        onClose={() => setIsAlert(false)}
+      />
       <CandidateForm voteId={voteId} form={form} onSubmit={onSubmit} />
     </Layout>
   );

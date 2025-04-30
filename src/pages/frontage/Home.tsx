@@ -1,4 +1,4 @@
-import Navbar from '../../components/frontstage/Navbar'
+import Navbar from '@/components/frontstage/Navbar'
 
 export default function Home() {
 

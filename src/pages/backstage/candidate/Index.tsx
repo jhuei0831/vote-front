@@ -1,4 +1,4 @@
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import * as React from "react";
 import {
   ColumnDef,
@@ -30,39 +30,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
-import { fetchQuestions } from "@/utils/question";
-import api from "@/utils/api";
+import { useQuestions } from "@/utils/question";
 import { Link } from "@tanstack/react-router";
-
-async function fetchCandidates(voteId: string, page: number, size: number) {
-  try {
-    const response = await api.get("/v1/candidate/list/"+voteId, { params: { page, size } });
-    return response.data;
-  } catch (err) {
-    console.error(err);
-    return { data: [], pagination: { total: 0, total_pages: 0 } };
-  }
-}
-
-async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this candidate?")) {
-    try {
-      const response = await api.delete(`/v1/candidate/`, { data: [id] });
-      alert(response.data.msg);
-      window.location.reload();
-    } catch (err) {
-      alert("Failed to delete candidate.");
-      console.log(err);
-    }
-  }
-}
-
-export type Candidate = {
-  id: string;
-  question_id: string;
-  name: string;
-  updated_at: string;
-};
+import { Candidate, fetchCandidates, handleDelete, useCandidates } from "@/utils/candidate";
 
 export default function CandidateIndex({ voteId }: { voteId: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -79,21 +49,18 @@ export default function CandidateIndex({ voteId }: { voteId: string }) {
   const [questionsArray, setQuestionsArray] = React.useState<
     { id: string; title: string }[]
   >([]);
-  // const { voteId } = useParams({ strict: false });
+  const { data: candidates } = useCandidates(voteId, pageIndex, pageSize);
+  const { data: questions } = useQuestions(voteId, 0, Number.MAX_SAFE_INTEGER);
   
   React.useEffect(() => {
     // Only fetch questions if voteId is defined
-    if (voteId) {
-      fetchQuestions(voteId, 1, 100).then((res) => {
-        const formattedQuestions = res.data.map((question: { id: string; title: string }) => ({
-          id: question.id,
-          title: question.title,
-        }));
-        setQuestionsArray(formattedQuestions);
-      });
+    if (candidates) {
+      setData(candidates.data);
+      setQuestionsArray(questions.data || []);
     }
-  }, []);
+  }, [candidates, questions]);
 
+  // Update local state when query data changes
   const questionMap = React.useMemo(() => {
     return questionsArray.reduce((map, question) => {
       map[question.id] = question.title;
@@ -129,9 +96,7 @@ export default function CandidateIndex({ voteId }: { voteId: string }) {
       cell: ({ row }) => (
         <div className="lowercase">
           <a
-            href={`/backstage/candidate/update?voteId=${new URLSearchParams(window.location.search).get(
-              "voteId"
-            )}&candidateId=${row.getValue("id")}`}
+            href={`/backstage/candidate/${voteId}/update/${row.getValue("id")}`}
             className="text-blue-500 hover:underline"
           >
             {row.getValue("name")}
@@ -171,15 +136,6 @@ export default function CandidateIndex({ voteId }: { voteId: string }) {
       },
     },
   ];
-
-  React.useEffect(() => {
-    async function loadData() {
-      const response = await fetchCandidates(voteId, pageIndex + 1, pageSize);
-      setData(response.data);
-      setPagination(response.pagination);
-    }
-    loadData();
-  }, [pageIndex, pageSize]);
 
   const table = useReactTable({
     data,

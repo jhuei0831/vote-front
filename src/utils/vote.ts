@@ -1,5 +1,5 @@
 import api from "@/utils/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
  * Vote data type
@@ -50,20 +50,76 @@ export async function fetchVote(id: string) {
 }
 
 /**
+ * Handles the creation of a new vote.
+ * @returns Mutation function for creating votes.
+ */
+export function useCreateVote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description: string; startTime: string; endTime: string }) => {
+      const response = await api.post("/v1/vote/create", data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate the votes list query to refetch after creation
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
+      alert(data.msg);
+    },
+    onError: (error) => {
+      alert("Failed to create vote.");
+      console.error(error);
+    }
+  });
+}
+
+/**
  * Handles the deletion of a vote.
  * @param id The ID of the vote to delete.
  */
-export async function handleDelete(id: string) {
-  if (confirm("Are you sure you want to delete this vote?")) {
-    try {
+/**
+ * Hook to handle vote deletion using React Query.
+ * @returns Mutation function for deleting votes.
+ */
+export function useDeleteVote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
       const response = await api.delete(`/v1/vote/`, { data: [id] });
-      alert(response.data.msg);
-      window.location.reload();
-    } catch (err) {
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate the votes list query to refetch after deletion
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
+      alert(data.msg);
+    },
+    onError: (error) => {
       alert("Failed to delete vote.");
-      console.log(err);
+      console.error(error);
     }
-  }
+  });
+}
+
+/**
+ * Fetches a list of votes with pagination.
+ * @param pageIndex 
+ * @param pageSize 
+ * @param p0 
+ * @returns 
+ */
+export function useVotes(pageIndex: number, pageSize: number, p0: { onSuccess: (response: any) => void; }) {
+  return useQuery({
+    queryKey: ["votes", pageIndex, pageSize],
+    queryFn: async () => {
+      // Only fetch if pageIndex and pageSize are valid
+      if (pageIndex < 0 || pageSize <= 0) return { data: [], pagination: { total: 0, total_pages: 0 } };
+      const response = await fetchVotes(pageIndex, pageSize);
+      p0.onSuccess(response);      
+      return response.data;
+    },
+    enabled: pageIndex >= 0 && pageSize > 0, // Only run query if pageIndex and pageSize are valid
+    staleTime: 60000, // 1分鐘內不會重新請求
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
+  });
 }
 
 /**
@@ -80,5 +136,6 @@ export function useVoteById(id: string) {
     },
     enabled: !!id,
     staleTime: 60000, // 1分鐘內不會重新請求
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
   });
 }

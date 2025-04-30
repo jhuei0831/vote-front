@@ -1,4 +1,4 @@
-import Layout from "@/components/backstage/BackLayout";
+import Layout from "@/components/backstage/Layout";
 import * as React from "react";
 import {
   ColumnDef,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/Pagination";
 import { Link } from "@tanstack/react-router";
-import { Vote, useVoteById, fetchVotes, handleDelete } from "@/utils/vote";
+import { Vote, useVoteById, useDeleteVote, useVotes } from "@/utils/vote";
 
 export default function Home() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -39,28 +39,33 @@ export default function Home() {
     React.useState<VisibilityState>({});
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
-  const [data, setData] = React.useState<Vote[]>([]);
   const [pagination, setPagination] = React.useState({
     total: 0,
     total_pages: 0,
   });
   const [selectedVoteId, setSelectedVoteId] = React.useState('');
-  const {data: vote} = useVoteById(selectedVoteId);
+  
+  // Use react-query hook to fetch votes data
+  const { data = [] } = useVotes(pageIndex + 1, pageSize, {
+    onSuccess: (response) => {
+      // Update pagination when data is successfully fetched
+      setPagination(response.pagination);
+    }
+  });
 
+  // Fetch selected vote details
+  const { data: vote } = useVoteById(selectedVoteId);
+  const deleteVoteMutation = useDeleteVote();
+
+  /**
+   * Handle vote click event
+   * @param id - Vote ID to select
+   */
   function handleVoteClick(id: string) {
     setSelectedVoteId(id);
     // Use the proper route param format for TanStack Router
     window.location.href = `/backstage/vote/${id}`;
   }
-
-  React.useEffect(() => {
-    async function loadData() {
-      const response = await fetchVotes(pageIndex + 1, pageSize);
-      setData(response.data);
-      setPagination(response.pagination);
-    }
-    loadData();
-  }, [pageIndex, pageSize]);
 
   const columns: ColumnDef<Vote>[] = [
     {
@@ -128,7 +133,8 @@ export default function Home() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleDelete(vote.id)}>
+              {/* 修正這裡，呼叫 mutate 方法 */}
+              <DropdownMenuItem onClick={() => deleteVoteMutation.mutate(vote.id)}>
                 Delete
               </DropdownMenuItem>
               <DropdownMenuSeparator />

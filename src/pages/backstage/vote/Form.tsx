@@ -14,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Textarea } from "@headlessui/react";
+import { Link } from "@tanstack/react-router";
+import { ArrowBigLeft, ArrowLeft } from "lucide-react";
 
 export const FormSchema = z
   .object({
@@ -117,7 +119,15 @@ export default function VoteForm({ form, onSubmit }: FormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <div className="flex items-center">
+          <Link to="/backstage" className="mr-2">
+            <Button variant="outline">
+              <ArrowLeft />
+              Back to list
+            </Button>
+          </Link>
+          <Button type="submit">Submit</Button>
+        </div>
       </form>
     </Form>
   );
