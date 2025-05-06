@@ -21,6 +21,7 @@ import { Toaster, toast } from "sonner"
 import api from "@/utils/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { defineStepper } from "@/components/ui/stepper";
+import { useVoterQuestions } from "@/utils/question";
 
 // 型別定義
 export type Candidate = {
@@ -267,30 +268,32 @@ export default function Voting() {
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const [rowSelections, setRowSelections] = React.useState<Record<number, Record<string, boolean>>>({});
   const [currentStep, setCurrentStep] = React.useState<string | null>(null);
-
+  const { data: questionData } = useVoterQuestions();
+  
   React.useEffect(() => {
-    async function fetchCandidates() {
-      try {
-        const response = await api.get("/v1/voter/questions");
-        setQuestions(response.data.data);
-        
-        const initialSelections: Record<number, Record<string, boolean>> = {};
-        response.data.data.forEach((question: Question) => {
-          if (question.candidates) {
-            initialSelections[question.id] = {};
+    if (questionData) {
+      async function fetchCandidates() {
+        try {
+          setQuestions(questionData.data);
+          
+          const initialSelections: Record<number, Record<string, boolean>> = {};
+          questionData.data.forEach((question: Question) => {
+            if (question.candidates) {
+              initialSelections[question.id] = {};
+            }
+          });
+          setRowSelections(initialSelections);
+          // 設置初始步驟
+          if (questionData.data.length > 0) {
+            setCurrentStep(questionData.data[0].id.toString());
           }
-        });
-        setRowSelections(initialSelections);
-        // 設置初始步驟
-        if (response.data.data.length > 0) {
-          setCurrentStep(response.data.data[0].id.toString());
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
       }
+      fetchCandidates();
     }
-    fetchCandidates();
-  }, []);
+  }, [questionData]);
 
   const handleRowSelectionChange = React.useCallback((questionId: number, newSelection: Record<string, boolean>) => {
     setRowSelections(prev => ({

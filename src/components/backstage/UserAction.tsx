@@ -1,8 +1,8 @@
 // src/components/UserAction.tsx
-import { AuthContext } from '@/utils/userAuth';
+import { UserAuthContext } from '@/utils/userAuth';
 import { Link, useRouter, useNavigate } from '@tanstack/react-router';
 
-export function UserAction({auth}: {auth: AuthContext}) {
+export function UserAction({auth}: {auth: UserAuthContext}) {
   // Initialize router and navigate functions
   const router = useRouter();
   const navigate = useNavigate();

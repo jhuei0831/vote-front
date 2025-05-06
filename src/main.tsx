@@ -4,7 +4,8 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // Import the generated route tree
 import { routeTree } from '@/routeTree.gen'
-import { AuthProvider, useAuth } from '@/utils/userAuth'
+import { UserAuthProvider, useUserAuth } from '@/utils/userAuth'
+import { VoterAuthProvider, useVoterAuth } from '@/utils/voterAuth'
 import '@/index.css'
 import Loading from './components/Loading'
 
@@ -26,16 +27,39 @@ declare module '@tanstack/react-router' {
   }
 }
 
+// 根據條件選擇 AuthProvider 和 useAuth hook
+function getAuthComponents(type: 'user' | 'voter') {
+  if (type === 'voter') {
+    return {
+      Provider: VoterAuthProvider,
+      useAuth: useVoterAuth,
+    }
+  }
+  return {
+    Provider: UserAuthProvider,
+    useAuth: useUserAuth,
+  }
+}
+
+// 你可以根據路由、環境變數或 props 來決定 authType
+const authType: 'user' | 'voter' = window.location.pathname.startsWith('/voter')
+  ? 'voter'
+  : 'user'
+
+const { Provider: AuthProvider, useAuth } = getAuthComponents(authType)
+
 function InnerApp() {
   const auth = useAuth()
   // 如果還沒取得 user，顯示 loading
   if (auth.loading) {
     return <Loading />
   }
+  // 將 auth 傳給 RouterProvider context
   return <RouterProvider router={router} context={{ auth }} />
 }
 
 function App() {
+  // 用選擇的 AuthProvider 包住 InnerApp
   return (
     <AuthProvider>
       <InnerApp />

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAuth, loginApi } from "@/utils/userAuth"
+import { useUserAuth } from "@/utils/userAuth"
 import {
   useRouter,
 } from '@tanstack/react-router'
@@ -20,7 +20,7 @@ export default function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const auth = useAuth()
+  const auth = useUserAuth()
   const router = useRouter()
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")

@@ -6,8 +6,10 @@ import { useForm } from "react-hook-form";
 import QuestionForm, { FormSchema } from "@/pages/backstage/question/Form";
 import { useCreateQuestion } from "@/utils/question"; // 載入自定義 hook
 import AlertMessage from "@/components/AlertMessage";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function QuestionCreate({voteId}: { voteId: string }) {
+  const queryClient = useQueryClient();
   // 警示訊息狀態
   const [isAlert, setIsAlert] = React.useState(false);
   const [variant, setVariant] = React.useState<
@@ -44,6 +46,7 @@ export default function QuestionCreate({voteId}: { voteId: string }) {
           setIsAlert(true);
           setVariant("success");
           setAlertDescription(res.msg);
+          queryClient.invalidateQueries({ queryKey: ['questions'] });
           form.reset();
         },
         onError: (err: any) => {

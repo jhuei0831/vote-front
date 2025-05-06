@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { UserAction } from '@/components/backstage/UserAction'
-import { useAuth } from '@/utils/userAuth'
+import { useUserAuth } from '@/utils/userAuth'
 
 const Navbar: FC = () => {
 
@@ -12,7 +12,7 @@ const Navbar: FC = () => {
   ]
   
   const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false)
-  const auth = useAuth()
+  const auth = useUserAuth()
 
   return (
       <header className="absolute inset-x-0 top-0 z-50">

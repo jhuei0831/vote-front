@@ -75,6 +75,18 @@ export function useQuestions(voteId: string, pageIndex: number, pageSize: number
   });
 }
 
+export function useVoterQuestions() {
+  return useQuery({
+    queryKey: ['voterQuestions'],
+    queryFn: async () => {
+      const response = await api.get("/v1/voter/questions");
+      return response.data;
+    },
+    staleTime: 60000,
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
+  });
+}
+
 /**
  * Creates a new question.
  * @returns The created question data.

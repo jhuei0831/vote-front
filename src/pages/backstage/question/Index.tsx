@@ -77,7 +77,7 @@ export default function QuestionIndex({voteId}: { voteId: string }) {
           <ArrowUpDown />
         </Button>
       ),
-      cell: ({ row }) => <div className="lowercase">
+      cell: ({ row }) => <div>
           <a 
             href={`/backstage/question/update?voteId=${new URLSearchParams(window.location.search).get('voteId')}&questionId=${row.getValue("id")}`} 
             className="text-blue-500 hover:underline"

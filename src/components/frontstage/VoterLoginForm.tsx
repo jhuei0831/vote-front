@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,32 +11,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import api from "@/utils/api"
-import { useParams } from 'react-router'
-import { Vote } from "@/pages/backstage/vote/Index"
+import { useVoteById } from "@/utils/vote"
 import { Eye, EyeOff } from "lucide-react"
 
-export default function VoterLoginForm({className, ...props}: React.ComponentPropsWithoutRef<"div">) {
-  const [vote, setVote] = useState<Vote>({} as Vote)
+interface VoterLoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  voteId: string;
+}
+
+export default function VoterLoginForm({className, voteId, ...props}: VoterLoginFormProps) {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { vote_id } = useParams()
-  
-  // use api to get vote id
-  useEffect(() => {
-    const fetchVote = async () => {
-      try {
-        const response = await api.get("/v1/vote/"+vote_id)
-        setVote(response.data.data)
-      } catch (error) {
-        console.error("Error fetching vote ID:", error)
-      }
-    }
-
-    fetchVote()
-  }
-  , [])
-
+  const {data: vote} = useVoteById(voteId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +37,7 @@ export default function VoterLoginForm({className, ...props}: React.ComponentPro
       // 紀錄vote_id
       localStorage.setItem("vote_id", vote.id)
       // 在這裡處理登入成功的邏輯，例如儲存 token 或跳轉頁面
-      window.location.href = "/vote/start"
+      window.location.href = "/voter/"+ vote.id +"/voting"
     } catch (err: any) {
       console.error("Login failed:", err)
       setError(err.response?.data?.message || "Login failed. Please try again.")
@@ -62,8 +48,8 @@ export default function VoterLoginForm({className, ...props}: React.ComponentPro
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{vote.title}</CardTitle>
-          <CardDescription>{vote.description}</CardDescription>
+          <CardTitle className="text-2xl">{vote?.title}</CardTitle>
+          <CardDescription>{vote?.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>

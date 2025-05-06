@@ -2,17 +2,18 @@ import * as React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import api from '@/utils/api'
 
-// 定義 AuthContext 介面
-export interface AuthContext {
+// 定義 UserAuthContext 介面
+export interface UserAuthContext {
   isAuthenticated: boolean
   login: (account: string, password: string) => Promise<void>
   logout: () => Promise<void>
   user: string | null
+  isVoted: boolean
   loading: boolean // 新增 loading 狀態
 }
 
 // 建立 React Context
-const AuthContext = React.createContext<AuthContext | null>(null)
+const UserAuthContext = React.createContext<UserAuthContext | null>(null)
 
 // 取得目前登入使用者的 API
 async function fetchUser(): Promise<string | null> {
@@ -50,7 +51,7 @@ async function logoutApi(): Promise<void> {
 }
 
 // AuthProvider 實作
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   // 私有 user 狀態，底線命名
   const [_user, _setUser] = React.useState<string | null>(null)
   // 私有 loading 狀態
@@ -98,17 +99,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 提供 context
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user: _user, login, logout, loading: _loading }}>
+    <UserAuthContext.Provider value={{ isAuthenticated, user: _user, login, logout, isVoted: false, loading: _loading }}>
       {children}
-    </AuthContext.Provider>
+    </UserAuthContext.Provider>
   )
 }
 
-// useAuth hook
-export function useAuth() {
-  const context = React.useContext(AuthContext)
+// useUserAuth hook
+export function useUserAuth() {
+  const context = React.useContext(UserAuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useUserAuth must be used within an UserAuthProvider')
   }
   return context
 }

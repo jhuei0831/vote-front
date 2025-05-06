@@ -54,7 +54,7 @@ export default function CandidateIndex({ voteId }: { voteId: string }) {
   
   React.useEffect(() => {
     // Only fetch questions if voteId is defined
-    if (candidates) {
+    if (candidates && questions) {
       setData(candidates.data);
       setQuestionsArray(questions.data || []);
     }
@@ -94,7 +94,7 @@ export default function CandidateIndex({ voteId }: { voteId: string }) {
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="lowercase">
+        <div>
           <a
             href={`/backstage/candidate/${voteId}/update/${row.getValue("id")}`}
             className="text-blue-500 hover:underline"

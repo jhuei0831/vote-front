@@ -13,10 +13,11 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
-import { Route as VoteStartImport } from './routes/vote/start'
-import { Route as VoteLoginImport } from './routes/vote/login'
 import { Route as authLoginImport } from './routes/(auth)/login'
 import { Route as AuthBackstageIndexImport } from './routes/_auth.backstage/index'
+import { Route as VoterVoteIdVotingImport } from './routes/voter/$voteId.voting'
+import { Route as VoterVoteIdResultImport } from './routes/voter/$voteId.result'
+import { Route as VoterVoteIdLoginImport } from './routes/voter/$voteId.login'
 import { Route as AuthBackstageVoteCreateImport } from './routes/_auth.backstage/vote/create'
 import { Route as AuthBackstageVoteVoteIdIndexImport } from './routes/_auth.backstage/vote/$voteId.index'
 import { Route as AuthBackstageQuestionVoteIdIndexImport } from './routes/_auth.backstage/question/$voteId.index'
@@ -39,18 +40,6 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const VoteStartRoute = VoteStartImport.update({
-  id: '/vote/start',
-  path: '/vote/start',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const VoteLoginRoute = VoteLoginImport.update({
-  id: '/vote/login',
-  path: '/vote/login',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const authLoginRoute = authLoginImport.update({
   id: '/(auth)/login',
   path: '/login',
@@ -61,6 +50,24 @@ const AuthBackstageIndexRoute = AuthBackstageIndexImport.update({
   id: '/backstage/',
   path: '/backstage/',
   getParentRoute: () => AuthRoute,
+} as any)
+
+const VoterVoteIdVotingRoute = VoterVoteIdVotingImport.update({
+  id: '/voter/$voteId/voting',
+  path: '/voter/$voteId/voting',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const VoterVoteIdResultRoute = VoterVoteIdResultImport.update({
+  id: '/voter/$voteId/result',
+  path: '/voter/$voteId/result',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const VoterVoteIdLoginRoute = VoterVoteIdLoginImport.update({
+  id: '/voter/$voteId/login',
+  path: '/voter/$voteId/login',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const AuthBackstageVoteCreateRoute = AuthBackstageVoteCreateImport.update({
@@ -143,18 +150,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLoginImport
       parentRoute: typeof rootRoute
     }
-    '/vote/login': {
-      id: '/vote/login'
-      path: '/vote/login'
-      fullPath: '/vote/login'
-      preLoaderRoute: typeof VoteLoginImport
+    '/voter/$voteId/login': {
+      id: '/voter/$voteId/login'
+      path: '/voter/$voteId/login'
+      fullPath: '/voter/$voteId/login'
+      preLoaderRoute: typeof VoterVoteIdLoginImport
       parentRoute: typeof rootRoute
     }
-    '/vote/start': {
-      id: '/vote/start'
-      path: '/vote/start'
-      fullPath: '/vote/start'
-      preLoaderRoute: typeof VoteStartImport
+    '/voter/$voteId/result': {
+      id: '/voter/$voteId/result'
+      path: '/voter/$voteId/result'
+      fullPath: '/voter/$voteId/result'
+      preLoaderRoute: typeof VoterVoteIdResultImport
+      parentRoute: typeof rootRoute
+    }
+    '/voter/$voteId/voting': {
+      id: '/voter/$voteId/voting'
+      path: '/voter/$voteId/voting'
+      fullPath: '/voter/$voteId/voting'
+      preLoaderRoute: typeof VoterVoteIdVotingImport
       parentRoute: typeof rootRoute
     }
     '/_auth/backstage/': {
@@ -258,8 +272,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthRouteWithChildren
   '/login': typeof authLoginRoute
-  '/vote/login': typeof VoteLoginRoute
-  '/vote/start': typeof VoteStartRoute
+  '/voter/$voteId/login': typeof VoterVoteIdLoginRoute
+  '/voter/$voteId/result': typeof VoterVoteIdResultRoute
+  '/voter/$voteId/voting': typeof VoterVoteIdVotingRoute
   '/backstage': typeof AuthBackstageIndexRoute
   '/backstage/vote/create': typeof AuthBackstageVoteCreateRoute
   '/backstage/candidate/$voteId/create': typeof AuthBackstageCandidateVoteIdCreateRoute
@@ -275,8 +290,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthRouteWithChildren
   '/login': typeof authLoginRoute
-  '/vote/login': typeof VoteLoginRoute
-  '/vote/start': typeof VoteStartRoute
+  '/voter/$voteId/login': typeof VoterVoteIdLoginRoute
+  '/voter/$voteId/result': typeof VoterVoteIdResultRoute
+  '/voter/$voteId/voting': typeof VoterVoteIdVotingRoute
   '/backstage': typeof AuthBackstageIndexRoute
   '/backstage/vote/create': typeof AuthBackstageVoteCreateRoute
   '/backstage/candidate/$voteId/create': typeof AuthBackstageCandidateVoteIdCreateRoute
@@ -293,8 +309,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
-  '/vote/login': typeof VoteLoginRoute
-  '/vote/start': typeof VoteStartRoute
+  '/voter/$voteId/login': typeof VoterVoteIdLoginRoute
+  '/voter/$voteId/result': typeof VoterVoteIdResultRoute
+  '/voter/$voteId/voting': typeof VoterVoteIdVotingRoute
   '/_auth/backstage/': typeof AuthBackstageIndexRoute
   '/_auth/backstage/vote/create': typeof AuthBackstageVoteCreateRoute
   '/_auth/backstage/candidate/$voteId/create': typeof AuthBackstageCandidateVoteIdCreateRoute
@@ -312,8 +329,9 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
-    | '/vote/login'
-    | '/vote/start'
+    | '/voter/$voteId/login'
+    | '/voter/$voteId/result'
+    | '/voter/$voteId/voting'
     | '/backstage'
     | '/backstage/vote/create'
     | '/backstage/candidate/$voteId/create'
@@ -328,8 +346,9 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
-    | '/vote/login'
-    | '/vote/start'
+    | '/voter/$voteId/login'
+    | '/voter/$voteId/result'
+    | '/voter/$voteId/voting'
     | '/backstage'
     | '/backstage/vote/create'
     | '/backstage/candidate/$voteId/create'
@@ -344,8 +363,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/(auth)/login'
-    | '/vote/login'
-    | '/vote/start'
+    | '/voter/$voteId/login'
+    | '/voter/$voteId/result'
+    | '/voter/$voteId/voting'
     | '/_auth/backstage/'
     | '/_auth/backstage/vote/create'
     | '/_auth/backstage/candidate/$voteId/create'
@@ -362,16 +382,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
   authLoginRoute: typeof authLoginRoute
-  VoteLoginRoute: typeof VoteLoginRoute
-  VoteStartRoute: typeof VoteStartRoute
+  VoterVoteIdLoginRoute: typeof VoterVoteIdLoginRoute
+  VoterVoteIdResultRoute: typeof VoterVoteIdResultRoute
+  VoterVoteIdVotingRoute: typeof VoterVoteIdVotingRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   authLoginRoute: authLoginRoute,
-  VoteLoginRoute: VoteLoginRoute,
-  VoteStartRoute: VoteStartRoute,
+  VoterVoteIdLoginRoute: VoterVoteIdLoginRoute,
+  VoterVoteIdResultRoute: VoterVoteIdResultRoute,
+  VoterVoteIdVotingRoute: VoterVoteIdVotingRoute,
 }
 
 export const routeTree = rootRoute
@@ -387,8 +409,9 @@ export const routeTree = rootRoute
         "/",
         "/_auth",
         "/(auth)/login",
-        "/vote/login",
-        "/vote/start"
+        "/voter/$voteId/login",
+        "/voter/$voteId/result",
+        "/voter/$voteId/voting"
       ]
     },
     "/": {
@@ -411,11 +434,14 @@ export const routeTree = rootRoute
     "/(auth)/login": {
       "filePath": "(auth)/login.tsx"
     },
-    "/vote/login": {
-      "filePath": "vote/login.tsx"
+    "/voter/$voteId/login": {
+      "filePath": "voter/$voteId.login.tsx"
     },
-    "/vote/start": {
-      "filePath": "vote/start.tsx"
+    "/voter/$voteId/result": {
+      "filePath": "voter/$voteId.result.tsx"
+    },
+    "/voter/$voteId/voting": {
+      "filePath": "voter/$voteId.voting.tsx"
     },
     "/_auth/backstage/": {
       "filePath": "_auth.backstage/index.tsx",
