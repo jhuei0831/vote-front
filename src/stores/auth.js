@@ -40,7 +40,6 @@ export const useAuthStore = defineStore('auth', () => {
       
       // 處理用戶資訊（可能在 response.user 或 response.data.user 或 response.data）
       await fetchUser()
-      console.log(user.value);
       
       return response
     } catch (error) {

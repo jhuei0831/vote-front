@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 創建 axios 實例
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL + '/v1',
   timeout: 10000,
   withCredentials: true, // 允許攜帶憑證（cookies）
   headers: {

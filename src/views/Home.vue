@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="bg-white">
     <div class="relative isolate overflow-hidden pt-14">
       <div class="mx-auto max-w-7xl px-6 lg:px-8">
@@ -13,3 +14,7 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import Navbar from '@/components/layout/Navbar.vue';
+</script>

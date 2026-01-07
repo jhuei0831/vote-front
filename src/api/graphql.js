@@ -14,7 +14,7 @@ function getHeaders() {
 
 const httpLink = new HttpLink({
   // You should use an absolute URL here
-  uri: 'http://localhost:9443/query',
+  uri: import.meta.env.VITE_API_BASE_URL + '/query',
   fetch: (uri, options) => {
     options.headers = getHeaders();
     return fetch(uri, options);
