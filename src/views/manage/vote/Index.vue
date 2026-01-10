@@ -5,9 +5,9 @@
       label="Create New Vote" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="visible = true"
+      @click="$router.push('/manage/vote/create')"
     />
-    <FormDialog v-model:visible="visible" />
+    
     <ApolloQuery
       :query="_voteQuery"
       :variables="{ 
@@ -44,7 +44,6 @@
           >
             <Column field="id" header="ID" :sortable="true" style="width: 10%"></Column>
             <Column field="title" header="Title" :sortable="true" style="width: 20%"></Column>
-            <Column field="description" header="Description" style="width: 25%"></Column>
             <Column field="status" header="Status" :sortable="true" style="width: 10%">
               <template #body="slotProps">
                 <span 
@@ -68,6 +67,12 @@
               </template>
             </Column>
             <Column field="creator.account" header="Creator" style="width: 10%"></Column>
+            <Column :exportable="false" style="min-width: 12rem">
+              <template #body="slotProps">
+                <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
+                  @click="confirmDeleteVote(slotProps.data)" />
+              </template>
+            </Column>
           </DataTable>
         </div>
 
@@ -75,18 +80,31 @@
         <div v-else class="p-6 text-center text-gray-500">
           <div class="text-lg">No votes found</div>
         </div>
+
+        
       </template>
     </ApolloQuery>
+    <Dialog v-model:visible="deleteVoteDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+      <div class="flex items-center gap-4">
+        <i class="pi pi-exclamation-triangle text-3xl!" />
+        <span v-if="vote">Are you sure you want to delete <b>{{ vote.title }}</b>?</span>
+      </div>
+      <template #footer>
+        <Button label="No" icon="pi pi-times" text @click="deleteVoteDialog = false" severity="secondary"
+          variant="text" />
+        <Button label="Yes" icon="pi pi-check" @click="deleteVote" severity="danger" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { VOTE_VIEW } from '@/api/vote.js'
+import { VOTE_VIEW, VOTE_DELETE } from '@/api/vote.js'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button';
-import FormDialog from '@/components/vote/FormDialog.vue';
+import Dialog from 'primevue/dialog';
 
 export default {
   components: {
@@ -94,37 +112,95 @@ export default {
     DataTable,
     Column,
     Button,
-    FormDialog
+    Dialog
   },
   data() {
     return {
       _voteQuery: VOTE_VIEW,
-      visible: false
+      deleteVoteDialog: false,
+      vote: null
     }
   },
   methods: {
     formatDate(dateString) {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleString()
+    },
+    confirmDeleteVote(vote) {
+      this.vote = vote;
+      this.deleteVoteDialog = true;
+    },
+    async deleteVote() {
+      try {
+        const result = await this.$apollo.mutate({
+          mutation: VOTE_DELETE,
+          variables: {
+            uuid: [this.vote.uuid]
+          },
+          update: (store, { data: { deleteVote: _deleteVote } }) => {
+            // 更新本地緩存以反映刪除操作
+            const cachedData = store.readQuery({
+              query: VOTE_VIEW,
+              variables: {
+                vote: {
+                  first: 999
+                },
+                withQuestions: false  
+              }
+            });
+
+            // Create a deep copy to avoid mutating read-only cache
+            const data = {
+              votes: [{
+                ...cachedData.votes[0],
+                edges: cachedData.votes[0].edges.filter(
+                  edge => edge.node.uuid !== this.vote.uuid
+                ),
+                totalCount: cachedData.votes[0].totalCount - 1
+              }]
+            };
+
+            store.writeQuery({
+              query: VOTE_VIEW,
+              data,
+              variables: {
+                vote: {
+                  first: 999
+                },
+                withQuestions: false  
+              }
+            });
+          }
+        });
+        console.log(result);
+        console.log('Deleting vote:', this.vote);
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Vote deleted successfully.', life: 3000 });
+      } catch (error) {
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete vote.', life: 3000 });
+        console.error('Error deleting vote:', error);
+      } finally {
+        this.deleteVoteDialog = false;
+        this.vote = null;
+      }
     }
   },
-  apollo: {
-    votes: {
-      query: VOTE_VIEW,
-      variables() {
-        return {
-          vote: {
-            first: 999
-          },
-          withQuestions: false  
-        }
-      },
-      update ({ allVotes }) {
-				// The field is different from 'votes'
-				return allVotes
-			},
-    },
-  }
+  // apollo: {
+  //   votes: {
+  //     query: VOTE_VIEW,
+  //     variables() {
+  //       return {
+  //         vote: {
+  //           first: 999
+  //         },
+  //         withQuestions: false  
+  //       }
+  //     },
+  //     update ({ allVotes }) {
+	// 			// The field is different from 'votes'
+	// 			return allVotes
+	// 		},
+  //   },
+  // }
 }
 
 </script>

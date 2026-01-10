@@ -1,30 +1,25 @@
 import { createWebHistory, createRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-import Home from '@/views/Home.vue'
-import Login from '@/views/Login.vue'
-import Manage from '@/Manage.vue'
-import Dashboard from '@/views/manage/Dashboard.vue'
-import Vote from '@/views/manage/Vote.vue'
-import NotFound from '@/views/NotFound.vue'
 
 const routes = [
   { 
-    path: '/', component: Home, 
+    path: '/', component: () => import('@/views/Home.vue'), 
     meta: { requiresAuth: true } 
   },
-  { path: '/login', component: Login },
+  { path: '/login', component: () => import('@/views/Login.vue') },
   { 
-    path: '/manage', component: Manage,
+    path: '/manage', component: () => import('@/Manage.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: 'dashboard', component: Dashboard },
-      { path: 'vote', component: Vote },
+      { path: 'dashboard', component: () => import('@/views/manage/Dashboard.vue') },
+      { path: 'vote', component: () => import('@/views/manage/vote/Index.vue') },
+      { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') }
     ], 
   },
   { 
     path: '/:pathMatch(.*)*', 
-    component: NotFound 
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 
