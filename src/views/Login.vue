@@ -83,7 +83,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import logoImg from '@/assets/grapes.png'
+import logoImg from '@/assets/banana.png'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()

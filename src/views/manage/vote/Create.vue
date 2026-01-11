@@ -9,7 +9,7 @@
 
 <script>
 import Form from '@/components/vote/Form.vue';
-import {  VOTE_CREATE } from '@/api/vote.js';
+import { VOTE_CREATE } from '@/api/vote.js';
 
 export default {
   components: {

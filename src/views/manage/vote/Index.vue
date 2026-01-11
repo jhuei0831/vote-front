@@ -69,6 +69,8 @@
             <Column field="creator.account" header="Creator" style="width: 10%"></Column>
             <Column :exportable="false" style="min-width: 12rem">
               <template #body="slotProps">
+                <Button icon="pi pi-pencil" class="mr-2" 
+                  @click="$router.push(`/manage/vote/update/${slotProps.data.uuid}`)" />
                 <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
                   @click="confirmDeleteVote(slotProps.data)" />
               </template>
@@ -100,7 +102,7 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { VOTE_VIEW, VOTE_DELETE } from '@/api/vote.js'
+import { VOTE_LIST, VOTE_DELETE } from '@/api/vote.js'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button';
@@ -116,7 +118,7 @@ export default {
   },
   data() {
     return {
-      _voteQuery: VOTE_VIEW,
+      _voteQuery: VOTE_LIST,
       deleteVoteDialog: false,
       vote: null
     }
@@ -140,7 +142,7 @@ export default {
           update: (store, { data: { deleteVote: _deleteVote } }) => {
             // 更新本地緩存以反映刪除操作
             const cachedData = store.readQuery({
-              query: VOTE_VIEW,
+              query: VOTE_LIST,
               variables: {
                 vote: {
                   first: 999
@@ -161,7 +163,7 @@ export default {
             };
 
             store.writeQuery({
-              query: VOTE_VIEW,
+              query: VOTE_LIST,
               data,
               variables: {
                 vote: {
@@ -183,24 +185,7 @@ export default {
         this.vote = null;
       }
     }
-  },
-  // apollo: {
-  //   votes: {
-  //     query: VOTE_VIEW,
-  //     variables() {
-  //       return {
-  //         vote: {
-  //           first: 999
-  //         },
-  //         withQuestions: false  
-  //       }
-  //     },
-  //     update ({ allVotes }) {
-	// 			// The field is different from 'votes'
-	// 			return allVotes
-	// 		},
-  //   },
-  // }
+  }
 }
 
 </script>

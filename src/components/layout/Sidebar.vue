@@ -20,7 +20,7 @@
             <!-- Sidebar component, swap this element with another sidebar if you like -->
             <div class="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
               <div class="relative flex h-16 shrink-0 items-center">
-                <img class="h-8 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company" />
+                <img class="h-8 w-auto" :src="logoImg" alt="vote" />
               </div>
               <nav class="relative flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
@@ -59,7 +59,7 @@
     <!-- Sidebar component, swap this element with another sidebar if you like -->
     <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
       <div class="flex h-16 shrink-0 items-center">
-        <img class="h-8 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company" />
+        <img class="h-8 w-auto" :src="logoImg" alt="vote" />
       </div>
       <nav class="flex flex-1 flex-col">
         <ul role="list" class="flex flex-1 flex-col gap-y-7">
@@ -110,6 +110,7 @@ import {
   XMarkIcon,
   ListBulletIcon
 } from '@heroicons/vue/24/outline'
+import logoImg from '@/assets/banana.png'
 
 const navigation = [
   { name: 'Dashboard', href: '/manage/dashboard', icon: HomeIcon, current: true },

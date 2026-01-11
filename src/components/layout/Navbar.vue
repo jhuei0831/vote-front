@@ -3,7 +3,7 @@
     <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
       <div class="flex lg:flex-1">
         <RouterLink to="/" class="-m-1.5 p-1.5">
-          <span class="sr-only">Your Company</span>
+          <span class="sr-only">Vote system</span>
           <img class="h-8 w-auto dark:hidden" :src="logoImg" alt="vote" />
           <img class="h-8 w-auto not-dark:hidden" :src="logoImg" alt="vote" />
         </RouterLink>
@@ -35,9 +35,9 @@
       <DialogPanel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
         <div class="flex items-center justify-between">
           <a href="#" class="-m-1.5 p-1.5">
-            <span class="sr-only">Your Company</span>
-            <img class="h-8 w-auto dark:hidden" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="" />
-            <img class="h-8 w-auto not-dark:hidden" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="" />
+            <span class="sr-only">Vote system</span>
+            <img class="h-8 w-auto dark:hidden" :src="logoImg" alt="vote" />
+            <img class="h-8 w-auto not-dark:hidden" :src="logoImg" alt="vote" />
           </a>
           <button type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = false">
             <span class="sr-only">Close menu</span>
@@ -67,7 +67,7 @@
 import { ref, computed } from 'vue'
 import { Dialog, DialogPanel } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
-import logoImg from '@/assets/grapes.png'
+import logoImg from '@/assets/banana.png'
 import { useAuthStore } from '@/stores/auth'
 import UserMenu from '@/components/widget/UserMenu.vue'
 

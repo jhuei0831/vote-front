@@ -14,7 +14,8 @@ const routes = [
     children: [
       { path: 'dashboard', component: () => import('@/views/manage/Dashboard.vue') },
       { path: 'vote', component: () => import('@/views/manage/vote/Index.vue') },
-      { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') }
+      { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') },
+      { path: 'vote/update/:uuid', component: () => import('@/views/manage/vote/Update.vue'), props: true }
     ], 
   },
   { 
