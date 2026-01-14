@@ -10,10 +10,15 @@
 <script>
 import Form from '@/components/vote/Form.vue';
 import { VOTE_VIEW, VOTE_UPDATE } from '@/api/vote.js';
+import { useLoadingStore } from '@/stores/loading';
 
 export default {
   components: {
     Form
+  },
+  setup() {
+    const loadingStore = useLoadingStore();
+    return { loadingStore };
   },
   props: {
     uuid: {
@@ -29,7 +34,6 @@ export default {
       endTime: null
     },
     isSubmitting: false,
-    isLoading: true
   }),
   async mounted() {
     await this.fetchVoteData();
@@ -48,6 +52,7 @@ export default {
       };
     },
     async fetchVoteData() {
+      this.loadingStore.show('載入投票資料...');
       try {
         const result = await this.$apollo.query({
           query: VOTE_VIEW,
@@ -74,7 +79,7 @@ export default {
           life: 3000
         });
       } finally {
-        this.isLoading = false;
+        this.loadingStore.hide();
       }
     },
     async handleUpdate() {
@@ -83,6 +88,7 @@ export default {
       }
 
       this.isSubmitting = true;
+      this.loadingStore.show('更新投票中...');
 
       try {
         const result = await this.$apollo.mutate({
@@ -116,6 +122,7 @@ export default {
           life: 3000
         });
       } finally {
+        this.loadingStore.hide();
         this.isSubmitting = false;
       }
     }

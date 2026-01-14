@@ -42,9 +42,15 @@
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
             :rows-per-page-options="[5, 10, 20, 50]"
           >
-            <Column field="id" header="ID" :sortable="true" style="width: 10%"></Column>
-            <Column field="title" header="Title" :sortable="true" style="width: 20%"></Column>
-            <Column field="status" header="Status" :sortable="true" style="width: 10%">
+            <Column field="id" header="ID" :sortable="true"></Column>
+            <Column field="title" header="Title" :sortable="true">
+              <template #body="slotProps">
+                <RouterLink :to="`/manage/vote/update/${slotProps.data.uuid}`" class="text-indigo-600 hover:underline">
+                  {{ slotProps.data.title }}
+                </RouterLink>
+              </template>
+            </Column>
+            <Column field="status" header="Status" :sortable="true">
               <template #body="slotProps">
                 <span 
                   :class="[
@@ -56,21 +62,19 @@
                 </span>
               </template>
             </Column>
-            <Column field="startTime" header="Start Time" :sortable="true" style="width: 15%">
+            <Column field="startTime" header="Start Time" :sortable="true">
               <template #body="slotProps">
                 {{ formatDate(slotProps.data.startTime) }}
               </template>
             </Column>
-            <Column field="endTime" header="End Time" :sortable="true" style="width: 15%">
+            <Column field="endTime" header="End Time" :sortable="true">
               <template #body="slotProps">
                 {{ formatDate(slotProps.data.endTime) }}
               </template>
             </Column>
-            <Column field="creator.account" header="Creator" style="width: 10%"></Column>
+            <Column field="creator.account" header="Creator"></Column>
             <Column :exportable="false" style="min-width: 12rem">
               <template #body="slotProps">
-                <Button icon="pi pi-pencil" class="mr-2" 
-                  @click="$router.push(`/manage/vote/update/${slotProps.data.uuid}`)" />
                 <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
                   @click="confirmDeleteVote(slotProps.data)" />
               </template>
@@ -82,8 +86,6 @@
         <div v-else class="p-6 text-center text-gray-500">
           <div class="text-lg">No votes found</div>
         </div>
-
-        
       </template>
     </ApolloQuery>
     <Dialog v-model:visible="deleteVoteDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
