@@ -45,22 +45,16 @@
             <Column field="id" header="ID" :sortable="true"></Column>
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
-                <RouterLink :to="`/manage/vote/update/${slotProps.data.uuid}`" class="text-indigo-600 hover:underline">
+                <RouterLink :to="`/manage/vote/update/${slotProps.data.uuid}`" class="text-amber-700 hover:underline">
                   {{ slotProps.data.title }}
                 </RouterLink>
               </template>
             </Column>
             <Column field="status" header="Status" :sortable="true">
               <template #body="slotProps">
-                <span 
-                  :class="[
-                    'px-3 py-1 rounded-full text-sm font-medium',
-                    slotProps.data.status === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  ]"
-                >
-                  {{ slotProps.data.status }}
-                </span>
+                <Tag :value="slotProps.data.status ? 'Active' : 'Inactive'" :severity="getSeverity(slotProps.data)" />
               </template>
+              
             </Column>
             <Column field="startTime" header="Start Time" :sortable="true">
               <template #body="slotProps">
@@ -109,6 +103,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import Tag from 'primevue/tag';
 
 export default {
   components: {
@@ -116,7 +111,8 @@ export default {
     DataTable,
     Column,
     Button,
-    Dialog
+    Dialog,
+    Tag
   },
   data() {
     return {
@@ -126,6 +122,18 @@ export default {
     }
   },
   methods: {
+    getSeverity(vote) {
+      switch (vote.status) {
+        case 0:
+          return 'danger';
+
+        case 1:
+          return 'success';
+
+        default:
+          return null;
+      }
+    },
     formatDate(dateString) {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleString()

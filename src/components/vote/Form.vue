@@ -17,7 +17,10 @@
       <label for="endTime" class="font-semibold w-24">End Time</label>
       <DatePicker id="endTime" class="flex-auto" show-time hour-format="24" v-model="voteForm.endTime" />
     </div>
-    <Button type="submit" severity="secondary" label="Submit" />
+    <div class="text-center">
+      <RouterLink to="/manage/vote" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
+      <Button type="submit" severity="Success" label="Submit" />
+    </div>
   </PrimeForm>
 </template>
 

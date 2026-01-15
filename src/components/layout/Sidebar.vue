@@ -27,10 +27,10 @@
                   <li>
                     <ul role="list" class="-mx-2 space-y-1">
                       <li v-for="item in navigation" :key="item.name">
-                        <a :href="item.href" :class="[item.current ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                          <component :is="item.icon" :class="[item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600', 'size-6 shrink-0']" aria-hidden="true" />
+                        <RouterLink :to="item.href" :class="[currentPath == item.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                          <component :is="item.icon" :class="[currentPath == item.href ? 'text-amber-700' : 'text-gray-400 group-hover:text-amber-700', 'size-6 shrink-0']" aria-hidden="true" />
                           {{ item.name }}
-                        </a>
+                        </RouterLink>
                       </li>
                     </ul>
                   </li>
@@ -38,10 +38,10 @@
                     <div class="text-xs/6 font-semibold text-gray-400">Your teams</div>
                     <ul role="list" class="-mx-2 mt-2 space-y-1">
                       <li v-for="team in teams" :key="team.name">
-                        <a :href="team.href" :class="[team.current ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                          <span :class="[team.current ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
+                        <RouterLink :to="team.href" :class="[currentPath == team.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                          <span :class="[currentPath == team.href ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
                           <span class="truncate">{{ team.name }}</span>
-                        </a>
+                        </RouterLink>
                       </li>
                     </ul>
                   </li>
@@ -59,7 +59,9 @@
     <!-- Sidebar component, swap this element with another sidebar if you like -->
     <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
       <div class="flex h-16 shrink-0 items-center">
-        <img class="h-8 w-auto" :src="logoImg" alt="vote" />
+        <RouterLink to="/">
+          <img class="h-8 w-auto" :src="logoImg" alt="vote" />
+        </RouterLink>
       </div>
       <nav class="flex flex-1 flex-col">
         <ul role="list" class="flex flex-1 flex-col gap-y-7">
@@ -68,8 +70,8 @@
               <li>
                 <ul role="list" class="-mx-2 space-y-1">
                   <li v-for="item in navigation" :key="item.name">
-                    <RouterLink :to="item.href" :class="[item.current ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                      <component :is="item.icon" :class="[item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600', 'size-6 shrink-0']" aria-hidden="true" />
+                    <RouterLink :to="item.href" :class="[isActive(item) ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                      <component :is="item.icon" :class="[isActive(item) ? 'text-amber-700' : 'text-gray-400 group-hover:text-amber-700', 'size-6 shrink-0']" aria-hidden="true" />
                       {{ item.name }}
                     </RouterLink>
                   </li>
@@ -79,10 +81,10 @@
                 <div class="text-xs/6 font-semibold text-gray-400">Your teams</div>
                 <ul role="list" class="-mx-2 mt-2 space-y-1">
                   <li v-for="team in teams" :key="team.name">
-                    <a :href="team.href" :class="[team.current ? 'bg-gray-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                      <span :class="[team.current ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
+                    <RouterLink :to="team.href" :class="[currentPath == team.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                      <span :class="[currentPath == team.href ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
                       <span class="truncate">{{ team.name }}</span>
-                    </a>
+                    </RouterLink>
                   </li>
                 </ul>
               </li>
@@ -102,7 +104,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
   Bars3Icon,
@@ -112,17 +115,29 @@ import {
 } from '@heroicons/vue/24/outline'
 import logoImg from '@/assets/banana.png'
 
+const sidebarOpen = ref(false)
+const route = useRoute()
+const currentPath = computed(() => route.path)
+const matchedRoute = computed(() => route.matched[route.matched.length - 1]?.path)
+const isActive = (item) => {
+  if (item.href === '/manage/vote') {
+    return route.path.startsWith('/manage/vote')
+  }
+
+  return route.path === item.href
+}
+console.log(matchedRoute.value);
+
 const navigation = [
-  { name: 'Dashboard', href: '/manage/dashboard', icon: HomeIcon, current: true },
-  { name: 'Vote', href: '/manage/vote', icon: ListBulletIcon, current: false },
+  { name: 'Dashboard', href: '/manage/dashboard', icon: HomeIcon },
+  { name: 'Vote', href: '/manage/vote', icon: ListBulletIcon },
 ]
 
 const teams = [
-  { name: 'Edit', href: '#', initial: 'E', current: false },
-  { name: 'Question', href: '#', initial: 'Q', current: false },
-  { name: 'Candidate', href: '#', initial: 'C', current: false },
-  { name: 'Ballot', href: '#', initial: 'B', current: false },
+  { name: 'Edit', href: '#', initial: 'E' },
+  { name: 'Question', href: '#', initial: 'Q' },
+  { name: 'Candidate', href: '#', initial: 'C' },
+  { name: 'Ballot', href: '#', initial: 'B' },
 ]
 
-const sidebarOpen = ref(false)
 </script>

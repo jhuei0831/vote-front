@@ -52,9 +52,22 @@
               </RouterLink>
             </div>
             <div class="py-6">
-              <RouterLink to="/login" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
-                Login
-              </RouterLink>
+              <div v-if="isLoggedIn">
+                <RouterLink to="/manage/dashboard" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                  Dashboard
+                </RouterLink>
+                <li 
+                  @click="authStore.logout()" 
+                  class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50 cursor-pointer"
+                >
+                  Logout
+                </li>
+              </div>
+              <div v-else>
+                <RouterLink to="/login" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                  Login
+                </RouterLink>
+              </div>
             </div>
           </div>
         </div>
