@@ -87,9 +87,9 @@ export const useAuthStore = defineStore('auth', () => {
     
     try {
       const userData = await getCurrentUser()
-      user.value = JSON.stringify(userData.user)
+      user.value = userData.user
       
-      localStorage.setItem('user', user.value)
+      localStorage.setItem('user', JSON.stringify(userData.user))
     } catch (error) {
       console.error('獲取用戶資訊失敗:', error)
       // 如果 token 無效，清除認證狀態

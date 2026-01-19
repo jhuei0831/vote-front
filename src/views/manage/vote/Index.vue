@@ -45,7 +45,11 @@
             <Column field="id" header="ID" :sortable="true"></Column>
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
-                <RouterLink :to="`/manage/vote/update/${slotProps.data.uuid}`" class="text-amber-700 hover:underline">
+                <RouterLink 
+                  :to="`/manage/vote/update/${slotProps.data.uuid}`" 
+                  @click="voteStore.setCurrentVote(slotProps.data)"
+                  class="text-amber-700 hover:underline"
+                >
                   {{ slotProps.data.title }}
                 </RouterLink>
               </template>
@@ -99,11 +103,13 @@
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
 import { VOTE_LIST, VOTE_DELETE } from '@/api/vote.js'
+import { useVoteStore } from '@/stores/vote';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag';
+import { onMounted } from 'vue';
 
 export default {
   components: {
@@ -114,11 +120,16 @@ export default {
     Dialog,
     Tag
   },
+  setup() {
+    const voteStore = useVoteStore();
+    voteStore.clearVote();
+  },
   data() {
     return {
       _voteQuery: VOTE_LIST,
       deleteVoteDialog: false,
-      vote: null
+      vote: null,
+      voteStore: useVoteStore()
     }
   },
   methods: {

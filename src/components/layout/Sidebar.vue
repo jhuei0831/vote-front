@@ -35,15 +35,17 @@
                     </ul>
                   </li>
                   <li>
-                    <div class="text-xs/6 font-semibold text-gray-400">Your teams</div>
-                    <ul role="list" class="-mx-2 mt-2 space-y-1">
-                      <li v-for="team in teams" :key="team.name">
-                        <RouterLink :to="team.href" :class="[currentPath == team.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                          <span :class="[currentPath == team.href ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
-                          <span class="truncate">{{ team.name }}</span>
-                        </RouterLink>
-                      </li>
-                    </ul>
+                    <div v-if="voteStore.voteExists">
+                      <div class="text-xs/6 font-semibold text-gray-400">{{ vote?.title}}</div>
+                      <ul role="list" class="-mx-2 mt-2 space-y-1">
+                        <li v-for="category in categories" :key="category.name">
+                          <RouterLink :to="category.href" :class="[currentPath == category.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                            <span :class="[currentPath == category.href ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ category.initial }}</span>
+                            <span class="truncate">{{ category.name }}</span>
+                          </RouterLink>
+                        </li>
+                      </ul>
+                    </div>
                   </li>
                 </ul>
               </nav>
@@ -78,15 +80,17 @@
                 </ul>
               </li>
               <li>
-                <div class="text-xs/6 font-semibold text-gray-400">Your teams</div>
-                <ul role="list" class="-mx-2 mt-2 space-y-1">
-                  <li v-for="team in teams" :key="team.name">
-                    <RouterLink :to="team.href" :class="[currentPath == team.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
-                      <span :class="[currentPath == team.href ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ team.initial }}</span>
-                      <span class="truncate">{{ team.name }}</span>
-                    </RouterLink>
-                  </li>
-                </ul>
+                <div v-if="voteStore.voteExists">
+                  <div class="text-xs/6 font-semibold text-gray-400">{{ vote?.title}}</div>
+                  <ul role="list" class="-mx-2 mt-2 space-y-1">
+                    <li v-for="category in categories" :key="category.name">
+                      <RouterLink :to="category.href" :class="[isActive(category) ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                        <span :class="[isActive(category) ? 'border-amber-700 text-amber-700' : 'border-gray-200 text-gray-400 group-hover:border-amber-700 group-hover:text-amber-700', 'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium']">{{ category.initial }}</span>
+                        <span class="truncate">{{ category.name }}</span>
+                      </RouterLink>
+                    </li>
+                  </ul>
+                </div>
               </li>
             </ul>
           </li>
@@ -104,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -114,30 +118,51 @@ import {
   ListBulletIcon
 } from '@heroicons/vue/24/outline'
 import logoImg from '@/assets/banana.png'
+import { useVoteStore } from '@/stores/vote';
+
+const voteStore = useVoteStore();
+const vote = computed(() => voteStore.vote);
 
 const sidebarOpen = ref(false)
 const route = useRoute()
 const currentPath = computed(() => route.path)
-const matchedRoute = computed(() => route.matched[route.matched.length - 1]?.path)
+
+// 監聽 route.params.uuid 變化並取得 vote 資料
+watch(() => route.params.uuid, async (newUuid) => {
+  if (newUuid) {
+    try {
+      await voteStore.fetchVoteByUuid(newUuid);
+    } catch (error) {
+      console.error('Failed to fetch vote:', error);
+    }
+  }
+}, { immediate: true });
+
+// 初次載入時也檢查
+onMounted(() => {
+  if (!voteStore.voteExists && route.params.uuid) {
+    voteStore.fetchVoteByUuid(route.params.uuid);
+  }
+});
+
 const isActive = (item) => {
-  if (item.href === '/manage/vote') {
-    return route.path.startsWith('/manage/vote')
+  if (route.path.startsWith('/manage/vote/update')) {
+    return item.href.startsWith('/manage/vote/update')
   }
 
   return route.path === item.href
 }
-console.log(matchedRoute.value);
 
 const navigation = [
   { name: 'Dashboard', href: '/manage/dashboard', icon: HomeIcon },
-  { name: 'Vote', href: '/manage/vote', icon: ListBulletIcon },
+  { name: 'Votes', href: '/manage/vote', icon: ListBulletIcon },
 ]
 
-const teams = [
-  { name: 'Edit', href: '#', initial: 'E' },
-  { name: 'Question', href: '#', initial: 'Q' },
+const categories = computed(() => [
+  { name: 'Edit', href: `/manage/vote/update/${voteStore.vote?.uuid}`, initial: 'E' },
+  { name: 'Question', href: `/manage/question/${voteStore.vote?.uuid}`, initial: 'Q' },
   { name: 'Candidate', href: '#', initial: 'C' },
   { name: 'Ballot', href: '#', initial: 'B' },
-]
+])
 
 </script>

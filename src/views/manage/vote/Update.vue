@@ -9,8 +9,9 @@
 
 <script>
 import Form from '@/components/vote/Form.vue';
-import { VOTE_VIEW, VOTE_UPDATE } from '@/api/vote.js';
+import { VOTE_UPDATE } from '@/api/vote.js';
 import { useLoadingStore } from '@/stores/loading';
+import { useVoteStore } from '@/stores/vote';
 
 export default {
   components: {
@@ -18,7 +19,8 @@ export default {
   },
   setup() {
     const loadingStore = useLoadingStore();
-    return { loadingStore };
+    const voteStore = useVoteStore();
+    return { loadingStore, voteStore };
   },
   props: {
     uuid: {
@@ -54,15 +56,7 @@ export default {
     async fetchVoteData() {
       this.loadingStore.show('載入投票資料...');
       try {
-        const result = await this.$apollo.query({
-          query: VOTE_VIEW,
-          variables: {
-            uuid: this.uuid,
-            withQuestions: false
-          }
-        });
-
-        const vote = result.data.vote;
+        const vote = await this.voteStore.fetchVoteByUuid(this.uuid);
         
         if (vote) {
           this.voteForm.title = vote.title || '';
