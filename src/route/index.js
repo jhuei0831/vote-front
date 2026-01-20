@@ -15,7 +15,10 @@ const routes = [
       { path: 'dashboard', component: () => import('@/views/manage/Dashboard.vue') },
       { path: 'vote', component: () => import('@/views/manage/vote/Index.vue') },
       { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') },
-      { path: 'vote/update/:uuid', component: () => import('@/views/manage/vote/Update.vue'), props: true }
+      { path: 'vote/update/:uuid', component: () => import('@/views/manage/vote/Update.vue'), props: true },
+      { path: 'question/:uuid', component: () => import('@/views/manage/question/Index.vue'), props: true },
+      // { path: 'question/create', component: () => import('@/views/manage/question/Create.vue') },
+      // { path: 'question/update/:uuid', component: () => import('@/views/manage/question/Update.vue'), props: true }
     ], 
   },
   { 

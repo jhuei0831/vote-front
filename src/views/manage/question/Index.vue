@@ -1,20 +1,21 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Votes</h1>
+    <h1 class="text-3xl font-bold mb-6">Questions</h1>
     <Button 
-      label="Create New Vote" 
+      label="Create New Question" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push('/manage/vote/create')"
+      @click="$router.push('/manage/question/create')"
     />
     
     <ApolloQuery
-      :query="_voteQuery"
+      :query="_questionQuery"
       :variables="{ 
-        vote: {
+        questionQuery: {
+          voteId: voteUuid,
           first: 999
         },
-        withQuestions: false  
+        withCandidates: false  
       }"
     >
       <template v-slot="{ result: { loading, error, data } }">
@@ -29,16 +30,16 @@
         </div>
 
         <!-- Result -->
-        <div v-else-if="data && data.votes && data.votes[0] && data.votes[0].edges.length > 0" class="result apollo">
+        <div v-else-if="data && data.questions && data.questions[0] && data.questions[0].edges.length > 0" class="result apollo">
           <DataTable 
-            :value="data.votes[0].edges.map(edge => edge.node)" 
+            :value="data.questions[0].edges.map(edge => edge.node)" 
             striped-rows
             scrollable
             scroll-height="flex"
             responsive-layout="scroll"
             paginator
             :rows="5"
-            :total-records="data.votes[0].totalCount"
+            :total-records="data.questions[0].totalCount"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
             :rows-per-page-options="[5, 10, 20, 50]"
           >
@@ -46,35 +47,29 @@
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/vote/update/${slotProps.data.uuid}`" 
-                  @click="voteStore.setCurrentVote(slotProps.data)"
+                  :to="`/manage/question/update/${slotProps.data.uuid}`" 
+                  @click="questionStore.setCurrentQuestion(slotProps.data)"
                   class="text-amber-700 hover:underline"
                 >
                   {{ slotProps.data.title }}
                 </RouterLink>
               </template>
             </Column>
-            <Column field="status" header="Status" :sortable="true">
+            <Column field="description" header="Description" :sortable="false" />
+            <Column field="createdAt" header="Created At" :sortable="true">
               <template #body="slotProps">
-                <Tag :value="slotProps.data.status ? 'Active' : 'Inactive'" :severity="getSeverity(slotProps.data)" />
-              </template>
-              
-            </Column>
-            <Column field="startTime" header="Start Time" :sortable="true">
-              <template #body="slotProps">
-                {{ formatDate(slotProps.data.startTime) }}
+                {{ formatDate(slotProps.data.createdAt) }}
               </template>
             </Column>
-            <Column field="endTime" header="End Time" :sortable="true">
+            <Column field="updatedAt" header="Updated At" :sortable="true">
               <template #body="slotProps">
-                {{ formatDate(slotProps.data.endTime) }}
+                {{ formatDate(slotProps.data.updatedAt) }}
               </template>
             </Column>
-            <Column field="creator.account" header="Creator"></Column>
-            <Column :exportable="false" style="min-width: 12rem">
+            <Column :exportable="false">
               <template #body="slotProps">
                 <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-                  @click="confirmDeleteVote(slotProps.data)" />
+                  @click="confirmDeleteQuestion(slotProps.data)" />
               </template>
             </Column>
           </DataTable>
@@ -82,19 +77,19 @@
 
         <!-- No result -->
         <div v-else class="p-6 text-center text-gray-500">
-          <div class="text-lg">No votes found</div>
+          <div class="text-lg">No questions found</div>
         </div>
       </template>
     </ApolloQuery>
-    <Dialog v-model:visible="deleteVoteDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deleteQuestionDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="vote">Are you sure you want to delete <b>{{ vote.title }}</b>?</span>
+        <span v-if="question">Are you sure you want to delete <b>{{ question.title }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteVoteDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deleteQuestionDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteVote" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deleteQuestion" severity="danger" />
       </template>
     </Dialog>
   </div>
@@ -102,8 +97,8 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { VOTE_LIST, VOTE_DELETE } from '@/api/vote.js'
-import { useVoteStore } from '@/stores/vote';
+import { QUESTION_LIST, QUESTION_DELETE } from '@/api/question.js'
+import { useQuestionStore } from '@/stores/question';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button';
@@ -119,89 +114,94 @@ export default {
     Dialog,
     Tag
   },
+  props: {
+    uuid: {
+      type: String,
+      required: true
+    }
+  },
   setup() {
-    const voteStore = useVoteStore();
-    voteStore.clearVote();
+    const questionStore = useQuestionStore();
+    return {
+      questionStore,
+    };
   },
   data() {
     return {
-      _voteQuery: VOTE_LIST,
-      deleteVoteDialog: false,
-      vote: null
+      _questionQuery: QUESTION_LIST,
+      deleteQuestionDialog: false,
+      question: null
+    }
+  },
+  computed: {
+    voteUuid() {
+      return this.$route.params.uuid;
     }
   },
   methods: {
-    getSeverity(vote) {
-      switch (vote.status) {
-        case 0:
-          return 'danger';
-
-        case 1:
-          return 'success';
-
-        default:
-          return null;
-      }
-    },
     formatDate(dateString) {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleString()
     },
-    confirmDeleteVote(vote) {
-      this.vote = vote;
-      this.deleteVoteDialog = true;
+    confirmDeleteQuestion(question) {
+      this.question = question;
+      this.deleteQuestionDialog = true;
     },
-    async deleteVote() {
+    async deleteQuestion() {
       try {
         const result = await this.$apollo.mutate({
-          mutation: VOTE_DELETE,
+          mutation: QUESTION_DELETE,
           variables: {
-            uuid: [this.vote.uuid]
+            ids: [this.question.id]
           },
-          update: (store, { data: { deleteVote: _deleteVote } }) => {
+          update: (store, { data: { deleteQuestion: _deleteQuestion } }) => {
             // 更新本地緩存以反映刪除操作
             const cachedData = store.readQuery({
-              query: VOTE_LIST,
+              query: QUESTION_LIST,
               variables: {
-                vote: {
+                questionQuery: {
+                  voteId: this.voteUuid,
                   first: 999
                 },
-                withQuestions: false  
+                withCandidates: false  
               }
             });
-
+            console.log(this.voteUuid);
+            console.log(cachedData);
+            
             // Create a deep copy to avoid mutating read-only cache
             const data = {
-              votes: [{
-                ...cachedData.votes[0],
-                edges: cachedData.votes[0].edges.filter(
-                  edge => edge.node.uuid !== this.vote.uuid
+              questions: [{
+                ...cachedData.questions[0],
+                edges: cachedData.questions[0].edges.filter(
+                  edge => edge.node.id !== this.question.id
                 ),
-                totalCount: cachedData.votes[0].totalCount - 1
+                totalCount: cachedData.questions[0].totalCount - 1
               }]
             };
 
             store.writeQuery({
-              query: VOTE_LIST,
+              query: QUESTION_LIST,
               data,
               variables: {
-                vote: {
+                questionQuery: {
+                  voteId: this.voteUuid,
                   first: 999
                 },
-                withQuestions: false  
+                withCandidates: false  
               }
             });
           }
         });
         console.log(result);
-        console.log('Deleting vote:', this.vote);
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Vote deleted successfully.', life: 3000 });
+        console.log('Deleting question:', this.question);
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Question deleted successfully.', life: 3000 });
       } catch (error) {
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete vote.', life: 3000 });
-        console.error('Error deleting vote:', error);
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete question.', life: 3000 });
+        console.error('Error deleting question:', error);
       } finally {
-        this.deleteVoteDialog = false;
-        this.vote = null;
+        this.deleteQuestionDialog = false;
+        this.question = null;
       }
     }
   }
