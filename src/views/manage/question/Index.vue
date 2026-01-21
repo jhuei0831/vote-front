@@ -5,14 +5,14 @@
       label="Create New Question" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push('/manage/question/create')"
+      @click="$router.push('/manage/question/create/' + uuid)"
     />
     
     <ApolloQuery
       :query="_questionQuery"
       :variables="{ 
         questionQuery: {
-          voteId: voteUuid,
+          voteId: uuid,
           first: 999
         },
         withCandidates: false  
@@ -47,8 +47,7 @@
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/question/update/${slotProps.data.uuid}`" 
-                  @click="questionStore.setCurrentQuestion(slotProps.data)"
+                  :to="`/manage/question/update/${uuid}/${slotProps.data.id}`" 
                   class="text-amber-700 hover:underline"
                 >
                   {{ slotProps.data.title }}
@@ -133,11 +132,6 @@ export default {
       question: null
     }
   },
-  computed: {
-    voteUuid() {
-      return this.$route.params.uuid;
-    }
-  },
   methods: {
     formatDate(dateString) {
       if (!dateString) return '-'
@@ -160,14 +154,12 @@ export default {
               query: QUESTION_LIST,
               variables: {
                 questionQuery: {
-                  voteId: this.voteUuid,
+                  voteId: this.uuid,
                   first: 999
                 },
                 withCandidates: false  
               }
             });
-            console.log(this.voteUuid);
-            console.log(cachedData);
             
             // Create a deep copy to avoid mutating read-only cache
             const data = {
@@ -185,7 +177,7 @@ export default {
               data,
               variables: {
                 questionQuery: {
-                  voteId: this.voteUuid,
+                  voteId: this.uuid,
                   first: 999
                 },
                 withCandidates: false  

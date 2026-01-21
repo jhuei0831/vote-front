@@ -127,7 +127,8 @@ export default {
     return {
       _voteQuery: VOTE_LIST,
       deleteVoteDialog: false,
-      vote: null
+      vote: null,
+      voteStore: useVoteStore()
     }
   },
   methods: {

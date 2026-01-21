@@ -17,8 +17,8 @@ const routes = [
       { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') },
       { path: 'vote/update/:uuid', component: () => import('@/views/manage/vote/Update.vue'), props: true },
       { path: 'question/:uuid', component: () => import('@/views/manage/question/Index.vue'), props: true },
-      // { path: 'question/create', component: () => import('@/views/manage/question/Create.vue') },
-      // { path: 'question/update/:uuid', component: () => import('@/views/manage/question/Update.vue'), props: true }
+      { path: 'question/create/:uuid', component: () => import('@/views/manage/question/Create.vue'), props: true },
+      { path: 'question/update/:uuid/:id', component: () => import('@/views/manage/question/Update.vue'), props: true }
     ], 
   },
   { 

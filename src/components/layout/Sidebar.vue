@@ -149,6 +149,9 @@ const isActive = (item) => {
   if (route.path.startsWith('/manage/vote/update')) {
     return item.href.startsWith('/manage/vote/update')
   }
+  if (route.path.startsWith('/manage/question')) {
+    return item.href.startsWith('/manage/question')
+  }
 
   return route.path === item.href
 }
