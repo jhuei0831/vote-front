@@ -1,0 +1,124 @@
+import gql from 'graphql-tag';
+
+export const VOTE_VIEW = gql`
+  query Vote($uuid: UUID!, $withQuestions: Boolean!) {
+    vote(uuid: $uuid, withQuestions: $withQuestions) {
+      id
+      uuid
+      title
+      description
+      startTime
+      endTime
+      creator {
+        id
+        account
+        email
+      }
+      status
+      questions @include(if: $withQuestions) {
+        id
+        voteId
+        title
+        description
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`
+
+export const VOTE_LIST = gql`
+  query Votes($vote: VoteQuery, $withQuestions: Boolean!) {
+    votes(input: $vote, withQuestions: $withQuestions) {
+      edges {
+        node {
+          id
+          uuid
+          title
+          description
+          startTime
+          endTime
+          creator {
+            id
+            account
+            email
+          }
+          status
+          questions @include(if: $withQuestions) {
+            id
+            voteId
+            title
+            description
+            createdAt
+            updatedAt
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      totalCount
+    }
+  }
+`
+
+export const VOTE_CREATE = gql`
+  mutation CreateVote($input: VoteCreate!) {
+    createVote(input: $input) {
+      id
+      uuid
+      title
+      description
+      startTime
+      endTime
+      creator {
+          id
+          account
+          email
+      }
+      status
+    }
+  }
+`
+
+export const VOTE_UPDATE = gql`
+  mutation Votes($uuid: UUID!, $vote: VoteUpdate!) {
+    updateVote(uuid: $uuid, input: $vote) {
+      id
+      uuid
+      title
+      description
+      startTime
+      endTime
+      creator {
+          id
+          account
+          email
+      }
+      status
+    }
+  }
+`
+
+export const VOTE_DELETE = gql`
+  mutation Votes($uuid: [UUID!]!) {
+    deleteVote(uuids: $uuid) {
+      id
+      uuid
+      title
+      description
+      startTime
+      endTime
+      creator {
+        id
+        account
+        email
+      }
+      status
+    }
+  }
+`

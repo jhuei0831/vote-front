@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import 'primeicons/primeicons.css';
+
+@font-face {
+  font-family: 'Cubic';
+  src: url('@/assets/Cubic_11.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  font-family: 'Cubic', sans-serif;
+}
