@@ -1,16 +1,17 @@
 <template>
   <Form 
-    :questionForm="questionForm"
-    :initialValues="questionForm" 
-    :resolver="resolver",
+    :initialValues="initialValues" 
+    :resolver="resolver"
     :uuid="uuid"
-    @submit="handleCreate"
+    :submit="handleCreate"
   />
 </template>
 
 <script>
 import Form from '@/components/question/Form.vue';
 import { QUESTION_CREATE, QUESTION_LIST } from '@/api/question.js';
+import { zodResolver } from '@primevue/forms/resolvers/zod';
+import { z } from 'zod';
 
 export default {
   components: {
@@ -23,30 +24,31 @@ export default {
     }
   },
   data: () => ({
-    questionForm: {
-      title: '',
-      description: '',
-    },
     isSubmitting: false
   }),
-  methods: {
-    resolver: ({ values }) => {
-      const errors = {};
-
-      if (!values.title) {
-        errors.title = [{ message: 'Title is required.' }];
-      }
-      
-      if (!values.description) {
-        errors.description = [{ message: 'Description is required.' }];
-      }
-      
+  computed: {
+    initialValues() {
       return {
-        values,
-        errors
+        title: '',
+        description: '',
       };
     },
-    async handleCreate(event) {
+    resolver() {
+      return zodResolver(
+        z.object({
+          title: z.string().min(1, { message: 'Title is required.' }),
+        })
+      );
+    }
+  },
+  methods: {
+    async handleCreate({ valid, values }) {
+      // 檢查表單是否有效
+      if (!valid) {
+        console.log('Form validation failed');
+        return;
+      }
+      
       // 防止重複提交
       if (this.isSubmitting) {
         return;
@@ -60,8 +62,8 @@ export default {
           variables: {
             input: {
               voteId: this.uuid,
-              title: this.questionForm.title,
-              description: this.questionForm.description,
+              title: values.title,
+              description: values.description,
             }
           },
           // 更新 Apollo 緩存

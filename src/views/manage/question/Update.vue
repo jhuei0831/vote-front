@@ -1,10 +1,10 @@
 <template>
   <Form 
-    :questionForm="questionForm"
-    :initialValues="questionForm" 
-    :resolver="resolver" 
+    :key="questionForm.title"
+    :initialValues="initialValues" 
+    :resolver="resolver"
     :uuid="uuid"
-    @submit="handleUpdate"
+    :submit="handleUpdate"
   />
 </template>
 
@@ -13,6 +13,8 @@ import Form from '@/components/question/Form.vue';
 import { QUESTION_UPDATE } from '@/api/question.js';
 import { useLoadingStore } from '@/stores/loading';
 import { useQuestionStore } from '@/stores/question';
+import { zodResolver } from '@primevue/forms/resolvers/zod';
+import { z } from 'zod';
 
 export default {
   components: {
@@ -43,23 +45,22 @@ export default {
   async mounted() {
     await this.fetchQuestionData();
   },
-  methods: {
-    resolver: ({ values }) => {
-      const errors = {};
-
-      if (!values.title) {
-        errors.title = [{ message: 'Title is required.' }];
-      }
-      
-      if (!values.description) {
-        errors.description = [{ message: 'Description is required.' }];
-      }
-
+  computed: {
+    initialValues() {
       return {
-        values,
-        errors
+        title: this.questionForm.title ?? '',
+        description: this.questionForm.description ?? '',
       };
     },
+    resolver() {
+      return zodResolver(
+        z.object({
+          title: z.string().min(1, { message: 'Title is required.' }),
+        })
+      );
+    }
+  },
+  methods: {
     async fetchQuestionData() {
       this.loadingStore.show('載入投票資料...');
       try {
@@ -81,7 +82,13 @@ export default {
         this.loadingStore.hide();
       }
     },
-    async handleUpdate() {
+    async handleUpdate({ valid, values }) {
+      // 檢查表單是否有效
+      if (!valid) {
+        console.log('Form validation failed');
+        return;
+      }
+      
       if (this.isSubmitting) {
         return;
       }
@@ -96,8 +103,8 @@ export default {
             id: this.id,
             input: {
               voteId: this.uuid,
-              title: this.questionForm.title,
-              description: this.questionForm.description,
+              title: values.title,
+              description: values.description,
             }
           },
         });
