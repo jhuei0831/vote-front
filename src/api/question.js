@@ -44,6 +44,21 @@ export const QUESTION_LIST = gql`
   }
 `;
 
+export const QUESTION_OPTIONS = gql`
+  query QuestionOptions($voteId: UUID!) {
+    questionOptions(voteId: $voteId) {
+      options {
+        id
+        voteId
+        title
+        description
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
 export const QUESTION_CREATE = gql`
   mutation Questions($input: QuestionCreate!) {
     createQuestion(input: $input) {

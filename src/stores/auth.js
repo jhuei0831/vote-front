@@ -14,7 +14,6 @@ export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref(JSON.parse(localStorage.getItem('user')) || null)
   const token = ref(localStorage.getItem('token') || null)
-  const isLoading = ref(false)
 
   // Getters
   const isAuthenticated = computed(() => !!token.value && checkAuth())
@@ -23,7 +22,6 @@ export const useAuthStore = defineStore('auth', () => {
   // Actions
   const login = async (credentials) => {
     try {
-      isLoading.value = true
       const response = await apiLogin(credentials)
       
       console.log('登入 API 回應:', response) // Debug: 查看實際回應格式
@@ -45,8 +43,6 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.error('登入錯誤:', error)
       throw error
-    } finally {
-      isLoading.value = false
     }
   }
 
@@ -124,7 +120,6 @@ export const useAuthStore = defineStore('auth', () => {
     // State
     user,
     token,
-    isLoading,
     
     // Getters
     isAuthenticated,

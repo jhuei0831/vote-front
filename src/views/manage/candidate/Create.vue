@@ -1,6 +1,6 @@
 <template>
   <Form 
-    :initialValues="initialValues" 
+    :initialValues="initialValues"
     :resolver="resolver"
     :uuid="uuid"
     :submit="handleCreate"
@@ -8,15 +8,19 @@
 </template>
 
 <script>
-import Form from '@/components/question/Form.vue';
-import { QUESTION_CREATE, QUESTION_LIST } from '@/api/question.js';
+import Form from '@/components/candidate/Form.vue';
+import { CANDIDATE_CREATE, CANDIDATE_LIST } from '@/api/candidate.js';
+import { useLoadingStore } from '@/stores/loading';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { z } from 'zod';
-import { de } from 'zod/v4/locales';
 
 export default {
   components: {
     Form
+  },
+  setup() {
+    const loadingStore = useLoadingStore();
+    return { loadingStore };
   },
   props: {
     uuid: {
@@ -25,31 +29,28 @@ export default {
     }
   },
   data: () => ({
-    isSubmitting: false
+    isSubmitting: false,
   }),
   computed: {
     initialValues() {
       return {
-        title: '',
-        description: '',
+        questionId: 0,
+        name: '',
       };
     },
     resolver() {
       return zodResolver(
         z.object({
-          title: z.string().min(1, { message: 'Title is required.' }),
-          description: z.string().optional(),
+          questionId: z.number({ invalid_type_error: 'Question is required.' }),
+          name: z.string().min(1, { message: 'Name is required.' }),
         })
       );
-    }
+    },
   },
   methods: {
     async handleCreate({ valid, values }) {
-      console.log(values);
-      
       // 檢查表單是否有效
       if (!valid) {
-        console.log('Form validation failed');
         return;
       }
       
@@ -59,52 +60,50 @@ export default {
       }
 
       this.isSubmitting = true;
+      this.loadingStore.show('建立候選人中...');
 
       try {
         const result = await this.$apollo.mutate({
-          mutation: QUESTION_CREATE,
+          mutation: CANDIDATE_CREATE,
           variables: {
-            input: {
-              voteId: this.uuid,
-              title: values.title,
-              description: values.description,
+            candidate: {
+              questionId: values.questionId,
+              name: values.name,
             }
           },
           // 更新 Apollo 緩存
           refetchQueries: [
             {
-              query: QUESTION_LIST,
+              query: CANDIDATE_LIST,
               variables: {
-                questionQuery: {
+                query: {
                   voteId: this.uuid,
                   first: 999
                 },
-                withCandidates: false
               }
             }
           ]
         });
         
-        console.log('Mutation result:', result);
-        
         this.$toast.add({ 
           severity: 'success', 
           summary: 'Success', 
-          detail: 'Question created successfully', 
+          detail: 'Candidate created successfully', 
           life: 3000
         });
         
         // 導航回列表頁
-        this.$router.push(`/manage/question/${this.uuid}`);
+        this.$router.push(`/manage/candidate/${this.uuid}`);
       } catch (error) {
-        console.error('Error creating question:', error);
+        console.error('Error creating candidate:', error);
         this.$toast.add({ 
           severity: 'error', 
           summary: 'Error', 
-          detail: error.message || 'Error creating question', 
+          detail: error.message || 'Error creating candidate', 
           life: 3000
         });
       } finally {
+        this.loadingStore.hide();
         this.isSubmitting = false;
       }
     }

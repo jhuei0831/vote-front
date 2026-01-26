@@ -10,12 +10,17 @@
         {{ $form.title.error?.message }}
       </Message>
     </div>
-    <FormField v-slot="$field" name="description" :initialValue="initialValues?.description || ''" class="mb-4">
+    <FormField v-slot="$field" name="description">
       <div class="flex items-center gap-4 mb-1">
         <label for="description" class="font-semibold w-24">Description</label>
-        <Editor id="description" v-model="$field.value" class="flex-auto" rows="4" @text-change="$field.onInput" @blur="$field.onBlur" />
+        <Editor 
+          id="description" 
+          v-model="$field.value" 
+          class="flex-auto" 
+          rows="4" 
+        />
       </div>
-      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple" class="ml-28">
+      <Message v-if="$field.invalid" severity="error" size="small" variant="simple" class="ml-28">
         {{ $field.error?.message }}
       </Message>
     </FormField>

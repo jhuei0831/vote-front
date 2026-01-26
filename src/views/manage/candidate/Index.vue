@@ -1,21 +1,20 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Questions</h1>
+    <h1 class="text-3xl font-bold mb-6">Candidates</h1>
     <Button 
-      label="Create New Question" 
+      label="Create New Candidate" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push(`/manage/question/${uuid}/create`)"
+      @click="$router.push(`/manage/candidate/${uuid}/create`)"
     />
     
     <ApolloQuery
-      :query="_questionQuery"
+      :query="_candidateQuery"
       :variables="{ 
-        questionQuery: {
+        query: {
           voteId: uuid,
           first: 999
-        },
-        withCandidates: false  
+        } 
       }"
     >
       <template v-slot="{ result: { loading, error, data } }">
@@ -30,31 +29,35 @@
         </div>
 
         <!-- Result -->
-        <div v-else-if="data && data.questions && data.questions[0] && data.questions[0].edges.length > 0" class="result apollo">
+        <div v-else-if="data && data.candidates && data.candidates[0] && data.candidates[0].edges.length > 0" class="result apollo">
           <DataTable 
-            :value="data.questions[0].edges.map(edge => edge.node)" 
+            :value="data.candidates[0].edges.map(edge => edge.node)" 
             striped-rows
             scrollable
             scroll-height="flex"
             responsive-layout="scroll"
             paginator
             :rows="5"
-            :total-records="data.questions[0].totalCount"
+            :total-records="data.candidates[0].totalCount"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
             :rows-per-page-options="[5, 10, 20, 50]"
           >
             <Column field="id" header="ID" :sortable="true"></Column>
-            <Column field="title" header="Title" :sortable="true">
+            <Column field="name" header="Name" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/question/${uuid}/update/${slotProps.data.id}`" 
+                  :to="`/manage/candidate/${uuid}/update/${slotProps.data.id}`" 
                   class="text-amber-700 hover:underline"
                 >
-                  {{ slotProps.data.title }}
+                  {{ slotProps.data.name }}
                 </RouterLink>
               </template>
             </Column>
-            <Column field="description" header="Description" :sortable="false" />
+            <Column field="questionId" header="Question" :sortable="true">
+              <template #body="slotProps">
+                {{ questionStore.questionMap.get(slotProps.data.questionId) || 'N/A' }}
+              </template>
+            </Column>
             <Column field="createdAt" header="Created At" :sortable="true">
               <template #body="slotProps">
                 {{ formatDate(slotProps.data.createdAt) }}
@@ -68,7 +71,7 @@
             <Column :exportable="false">
               <template #body="slotProps">
                 <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-                  @click="confirmDeleteQuestion(slotProps.data)" />
+                  @click="confirmDeleteCandidate(slotProps.data)" />
               </template>
             </Column>
           </DataTable>
@@ -76,19 +79,19 @@
 
         <!-- No result -->
         <div v-else class="p-6 text-center text-gray-500">
-          <div class="text-lg">No questions found</div>
+          <div class="text-lg">No candidates found</div>
         </div>
       </template>
     </ApolloQuery>
-    <Dialog v-model:visible="deleteQuestionDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deleteCandidateDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="question">Are you sure you want to delete <b>{{ question.title }}</b>?</span>
+        <span v-if="candidate">Are you sure you want to delete <b>{{ candidate.title }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteQuestionDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deleteCandidateDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteQuestion" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deleteCandidate" severity="danger" />
       </template>
     </Dialog>
   </div>
@@ -96,7 +99,8 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { QUESTION_LIST, QUESTION_DELETE } from '@/api/question.js'
+import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/api/candidate.js'
+import { useCandidateStore } from '@/stores/candidate';
 import { useQuestionStore } from '@/stores/question';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -120,16 +124,19 @@ export default {
     }
   },
   setup() {
+    const candidateStore = useCandidateStore();
     const questionStore = useQuestionStore();
     return {
+      candidateStore,
       questionStore,
     };
   },
   data() {
     return {
-      _questionQuery: QUESTION_LIST,
-      deleteQuestionDialog: false,
-      question: null
+      _candidateQuery: CANDIDATE_LIST,
+      deleteCandidateDialog: false,
+      candidate: null,
+      questions: []
     }
   },
   methods: {
@@ -137,63 +144,61 @@ export default {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleString()
     },
-    confirmDeleteQuestion(question) {
-      this.question = question;
-      this.deleteQuestionDialog = true;
+    confirmDeleteCandidate(candidate) {
+      this.candidate = candidate;
+      this.deleteCandidateDialog = true;
     },
-    async deleteQuestion() {
+    async deleteCandidate() {
       try {
         const result = await this.$apollo.mutate({
-          mutation: QUESTION_DELETE,
+          mutation: CANDIDATE_DELETE,
           variables: {
-            ids: [this.question.id]
+            ids: [this.candidate.id]
           },
-          update: (store, { data: { deleteQuestion: _deleteQuestion } }) => {
+          update: (store, { data: { deleteCandidate: _deleteCandidate } }) => {
             // 更新本地緩存以反映刪除操作
             const cachedData = store.readQuery({
-              query: QUESTION_LIST,
+              query: CANDIDATE_LIST,
               variables: {
-                questionQuery: {
+                query: {
                   voteId: this.uuid,
                   first: 999
                 },
-                withCandidates: false  
               }
             });
             
             // Create a deep copy to avoid mutating read-only cache
             const data = {
-              questions: [{
-                ...cachedData.questions[0],
-                edges: cachedData.questions[0].edges.filter(
-                  edge => edge.node.id !== this.question.id
+              candidates: [{
+                ...cachedData.candidates[0],
+                edges: cachedData.candidates[0].edges.filter(
+                  edge => edge.node.id !== this.candidate.id
                 ),
-                totalCount: cachedData.questions[0].totalCount - 1
+                totalCount: cachedData.candidates[0].totalCount - 1
               }]
             };
 
             store.writeQuery({
-              query: QUESTION_LIST,
+              query: CANDIDATE_LIST,
               data,
               variables: {
-                questionQuery: {
+                query: {
                   voteId: this.uuid,
                   first: 999
                 },
-                withCandidates: false  
               }
             });
           }
         });
         console.log(result);
-        console.log('Deleting question:', this.question);
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Question deleted successfully.', life: 3000 });
+        console.log('Deleting candidate:', this.candidate);
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Candidate deleted successfully.', life: 3000 });
       } catch (error) {
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete question.', life: 3000 });
-        console.error('Error deleting question:', error);
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete candidate.', life: 3000 });
+        console.error('Error deleting candidate:', error);
       } finally {
-        this.deleteQuestionDialog = false;
-        this.question = null;
+        this.deleteCandidateDialog = false;
+        this.candidate = null;
       }
     }
   }

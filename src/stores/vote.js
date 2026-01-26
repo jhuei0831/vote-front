@@ -6,7 +6,6 @@ import { VOTE_VIEW } from '@/api/vote';
 export const useVoteStore = defineStore('vote', () => {
   // State
   const vote = ref(null);
-  const isLoading = ref(false);
 
   // Getters
   const voteExists = computed(() => {
@@ -26,7 +25,6 @@ export const useVoteStore = defineStore('vote', () => {
     if (!uuid) return;
     
     try {
-      isLoading.value = true;
       const result = await apolloProvider.defaultClient.query({
         query: VOTE_VIEW,
         variables: {
@@ -43,8 +41,6 @@ export const useVoteStore = defineStore('vote', () => {
     } catch (error) {
       console.error('Error fetching vote:', error);
       throw error;
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -54,7 +50,6 @@ export const useVoteStore = defineStore('vote', () => {
 
   return {
     vote,
-    isLoading,
     voteExists,
     setCurrentVote,
     fetchVoteByUuid,

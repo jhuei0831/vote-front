@@ -1,24 +1,78 @@
 import { createWebHistory, createRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useQuestionStore } from '@/stores/question'
 
+// candidate route guard to fetch questions before entering
+const candidateBeforeEnter = async (to) => {
+  const questionStore = useQuestionStore();
+  await questionStore.fetchQuestionOptions(to.params.uuid);
+}
 
 const routes = [
   { 
-    path: '/', component: () => import('@/views/Home.vue'), 
+    path: '/', 
+    component: () => import('@/views/Home.vue'), 
     meta: { requiresAuth: true } 
   },
-  { path: '/login', component: () => import('@/views/Login.vue') },
   { 
-    path: '/manage', component: () => import('@/Manage.vue'),
+    path: '/login', 
+    component: () => import('@/views/Login.vue') 
+  },
+  { 
+    path: '/manage', 
+    component: () => import('@/Manage.vue'),
     meta: { requiresAuth: true },
     children: [
-      { path: 'dashboard', component: () => import('@/views/manage/Dashboard.vue') },
-      { path: 'vote', component: () => import('@/views/manage/vote/Index.vue') },
-      { path: 'vote/create', component: () => import('@/views/manage/vote/Create.vue') },
-      { path: 'vote/update/:uuid', component: () => import('@/views/manage/vote/Update.vue'), props: true },
-      { path: 'question/:uuid', component: () => import('@/views/manage/question/Index.vue'), props: true },
-      { path: 'question/create/:uuid', component: () => import('@/views/manage/question/Create.vue'), props: true },
-      { path: 'question/update/:uuid/:id', component: () => import('@/views/manage/question/Update.vue'), props: true }
+      { 
+        path: 'dashboard', 
+        component: () => import('@/views/manage/Dashboard.vue') 
+      },
+      { 
+        path: 'vote', 
+        component: () => import('@/views/manage/vote/Index.vue') 
+      },
+      { 
+        path: 'vote/create', 
+        component: () => import('@/views/manage/vote/Create.vue') 
+      },
+      { 
+        path: 'vote/update/:uuid', 
+        component: () => import('@/views/manage/vote/Update.vue'), 
+        props: true 
+      },
+      { 
+        path: 'question/:uuid', 
+        component: () => import('@/views/manage/question/Index.vue'), 
+        props: true 
+      },
+      { 
+        path: 'question/:uuid/create', 
+        component: () => import('@/views/manage/question/Create.vue'), 
+        props: true 
+      },
+      { 
+        path: 'question/:uuid/update/:id', 
+        component: () => import('@/views/manage/question/Update.vue'), 
+        props: true 
+      },
+      { 
+        path: 'candidate/:uuid', 
+        component: () => import('@/views/manage/candidate/Index.vue'), 
+        props: true,
+        beforeEnter: candidateBeforeEnter,
+      },
+      { 
+        path: 'candidate/:uuid/create', 
+        component: () => import('@/views/manage/candidate/Create.vue'), 
+        props: true,
+        beforeEnter: candidateBeforeEnter,
+      },
+      { 
+        path: 'candidate/:uuid/update/:id', 
+        component: () => import('@/views/manage/candidate/Update.vue'), 
+        props: true,
+        beforeEnter: candidateBeforeEnter,
+      }
     ], 
   },
   { 

@@ -152,6 +152,9 @@ const isActive = (item) => {
   if (route.path.startsWith('/manage/question')) {
     return item.href.startsWith('/manage/question')
   }
+  if (route.path.startsWith('/manage/candidate')) {
+    return item.href.startsWith('/manage/candidate')
+  }
 
   return route.path === item.href
 }
@@ -164,7 +167,7 @@ const navigation = [
 const categories = computed(() => [
   { name: 'Edit', href: `/manage/vote/update/${voteStore.vote?.uuid}`, initial: 'E' },
   { name: 'Question', href: `/manage/question/${voteStore.vote?.uuid}`, initial: 'Q' },
-  { name: 'Candidate', href: '#', initial: 'C' },
+  { name: 'Candidate', href: `/manage/candidate/${voteStore.vote?.uuid}`, initial: 'C' },
   { name: 'Ballot', href: '#', initial: 'B' },
 ])
 
