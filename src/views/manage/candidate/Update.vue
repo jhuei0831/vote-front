@@ -10,7 +10,7 @@
 
 <script>
 import Form from '@/components/candidate/Form.vue';
-import { CANDIDATE_UPDATE } from '@/api/candidate.js';
+import { CANDIDATE_UPDATE } from '@/graphql/candidate.js';
 import { useLoadingStore } from '@/stores/loading';
 import { useCandidateStore } from '@/stores/candidate';
 import { zodResolver } from '@primevue/forms/resolvers/zod';

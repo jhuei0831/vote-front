@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { apolloProvider } from "@/api/graphql";
-import { QUESTION_VIEW, QUESTION_OPTIONS } from "@/api/question";
+import { apolloProvider } from "@/api/apollo";
+import { QUESTION_VIEW, QUESTION_OPTIONS } from "@/graphql/question";
 
 export const useQuestionStore = defineStore("question", {
   state: () => ({

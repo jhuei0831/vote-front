@@ -96,7 +96,7 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { QUESTION_LIST, QUESTION_DELETE } from '@/api/question.js'
+import { QUESTION_LIST, QUESTION_DELETE } from '@/graphql/question.js'
 import { useQuestionStore } from '@/stores/question';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'

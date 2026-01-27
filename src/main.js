@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { router } from '@/route/index.js'
-import { apolloProvider } from '@/api/graphql.js'
+import { apolloProvider } from '@/api/apollo.js'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';

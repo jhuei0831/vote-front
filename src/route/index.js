@@ -28,16 +28,13 @@ const routes = [
         component: () => import('@/views/manage/Dashboard.vue') 
       },
       { 
-        path: 'vote', 
+        path: 'vote',
+        name: 'VoteIndex',
         component: () => import('@/views/manage/vote/Index.vue') 
       },
       { 
-        path: 'vote/create', 
-        component: () => import('@/views/manage/vote/Create.vue') 
-      },
-      { 
-        path: 'vote/update/:uuid', 
-        component: () => import('@/views/manage/vote/Update.vue'), 
+        path: 'vote/upsert/:uuid?', 
+        component: () => import('@/views/manage/vote/Upsert.vue'), 
         props: true 
       },
       { 

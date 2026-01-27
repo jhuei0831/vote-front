@@ -9,7 +9,7 @@
 
 <script>
 import Form from '@/components/candidate/Form.vue';
-import { CANDIDATE_CREATE, CANDIDATE_LIST } from '@/api/candidate.js';
+import { CANDIDATE_CREATE, CANDIDATE_LIST } from '@/graphql/candidate.js';
 import { useLoadingStore } from '@/stores/loading';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { z } from 'zod';

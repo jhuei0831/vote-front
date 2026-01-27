@@ -9,10 +9,9 @@
 
 <script>
 import Form from '@/components/question/Form.vue';
-import { QUESTION_CREATE, QUESTION_LIST } from '@/api/question.js';
+import { QUESTION_CREATE, QUESTION_LIST } from '@/graphql/question.js';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { z } from 'zod';
-import { de } from 'zod/v4/locales';
 
 export default {
   components: {

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { apolloProvider } from "@/api/graphql";
-import { CANDIDATE_VIEW } from "@/api/candidate";
+import { apolloProvider } from "@/api/apollo";
+import { CANDIDATE_VIEW } from "@/graphql/candidate";
 
 export const useCandidateStore = defineStore("candidate", {
   actions: {

@@ -2,7 +2,7 @@
 module.exports = {
   client: {
     service: {
-      name: 'my-app',
+      name: 'vote',
       // URL to the GraphQL API
       url: 'http://localhost:9443/query',
     },

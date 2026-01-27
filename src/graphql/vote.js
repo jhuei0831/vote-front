@@ -86,8 +86,8 @@ export const VOTE_CREATE = gql`
 `
 
 export const VOTE_UPDATE = gql`
-  mutation Votes($uuid: UUID!, $vote: VoteUpdate!) {
-    updateVote(uuid: $uuid, input: $vote) {
+  mutation Votes($uuid: UUID!, $input: VoteUpdate!) {
+    updateVote(uuid: $uuid, input: $input) {
       id
       uuid
       title

@@ -5,7 +5,7 @@
       label="Create New Vote" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push('/manage/vote/create')"
+      @click="$router.push('/manage/vote/upsert')"
     />
     
     <ApolloQuery
@@ -46,7 +46,7 @@
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/vote/update/${slotProps.data.uuid}`" 
+                  :to="`/manage/vote/upsert/${slotProps.data.uuid}`" 
                   @click="voteStore.setCurrentVote(slotProps.data)"
                   class="text-amber-700 hover:underline"
                 >
@@ -102,7 +102,7 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { VOTE_LIST, VOTE_DELETE } from '@/api/vote.js'
+import { VOTE_LIST, VOTE_DELETE } from '@/graphql/vote.js'
 import { useVoteStore } from '@/stores/vote';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'

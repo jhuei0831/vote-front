@@ -10,7 +10,7 @@
 
 <script>
 import Form from '@/components/question/Form.vue';
-import { QUESTION_UPDATE } from '@/api/question.js';
+import { QUESTION_UPDATE } from '@/graphql/question.js';
 import { useLoadingStore } from '@/stores/loading';
 import { useQuestionStore } from '@/stores/question';
 import { zodResolver } from '@primevue/forms/resolvers/zod';

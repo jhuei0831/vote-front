@@ -99,7 +99,7 @@
 
 <script>
 import { ApolloQuery } from '@vue/apollo-components'
-import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/api/candidate.js'
+import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate.js'
 import { useCandidateStore } from '@/stores/candidate';
 import { useQuestionStore } from '@/stores/question';
 import DataTable from 'primevue/datatable'
