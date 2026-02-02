@@ -8,6 +8,7 @@
     <Form
       v-if="!store.state.loadingInitial"
       :key="store.state.uuid || 'create'"
+      :uuid="store.state.uuid"
       :initialValues="store.state.initialValues"
       :resolver="resolver"
       :submitting="store.state.submitting"
@@ -21,28 +22,25 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast';
-import { useVoteStore } from '@/stores/vote'
+import { useQuestionStore } from '@/stores/question'
 import { z } from 'zod';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
-import Form from '@/components/vote/Form.vue'
+import Form from '@/components/question/Form.vue'
 import Message from 'primevue/message'
 
 const route = useRoute()
-const store = useVoteStore()
+const store = useQuestionStore()
 const toast = useToast();
 
-// 取得路由 uuid，決定新增/編輯
-function currentUuid() {
-  return route.params.uuid ? String(route.params.uuid) : null
-}
+const props = defineProps(['uuid', 'id']);
 
 onMounted(() => {
-  store.init(currentUuid())
+  store.init(props.uuid, props.id)
 })
 
 // 若路由變更（例如由新增 -> 編輯），重新 init
 watch(() => route.fullPath, () => {
-  store.init(currentUuid())
+  store.init(props.uuid, props.id)
 })
 
 onBeforeUnmount(() => {
@@ -52,9 +50,7 @@ onBeforeUnmount(() => {
 const resolver = ref(zodResolver(
   z.object({
     title: z.string().min(1, 'Title is required.'),
-    description: z.string().optional(),
-    startTime: z.date('Start Time is required.'),
-    endTime: z.date('End Time is required.')
+    description: z.string().optional()
   })
 ));
 
@@ -74,7 +70,7 @@ async function handleSubmit({ valid, values }) {
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: 'Vote updated successfully', 
+      detail: 'Question updated successfully', 
       life: 3000
     });
   } catch (e) {
@@ -83,7 +79,7 @@ async function handleSubmit({ valid, values }) {
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: e.message || 'Error updating vote', 
+      detail: e.message || 'Error updating question', 
       life: 3000
     });
   }

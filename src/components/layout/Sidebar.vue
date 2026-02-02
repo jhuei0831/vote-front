@@ -146,8 +146,8 @@ onMounted(() => {
 });
 
 const isActive = (item) => {
-  if (route.path.startsWith('/manage/vote/update')) {
-    return item.href.startsWith('/manage/vote/update')
+  if (route.path.startsWith('/manage/vote/upsert')) {
+    return item.href.startsWith('/manage/vote/upsert')
   }
   if (route.path.startsWith('/manage/question')) {
     return item.href.startsWith('/manage/question')
@@ -165,7 +165,7 @@ const navigation = [
 ]
 
 const categories = computed(() => [
-  { name: 'Edit', href: `/manage/vote/update/${voteStore.vote?.uuid}`, initial: 'E' },
+  { name: 'Edit', href: `/manage/vote/upsert/${voteStore.vote?.uuid}`, initial: 'E' },
   { name: 'Question', href: `/manage/question/${voteStore.vote?.uuid}`, initial: 'Q' },
   { name: 'Candidate', href: `/manage/candidate/${voteStore.vote?.uuid}`, initial: 'C' },
   { name: 'Ballot', href: '#', initial: 'B' },

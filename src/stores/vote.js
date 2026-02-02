@@ -37,7 +37,7 @@ export const useVoteStore = defineStore('vote', () => {
   }
   
   async function init(uuid) {
-    // 初始化：設定模式 & 讀取初值（只在編輯模式）
+    // Initialize: set mode & load initial values (only in edit mode)
     console.log('Init called with uuid:', uuid);
     state.uuid = uuid ?? null
     state.isEdit = !!uuid
@@ -62,9 +62,7 @@ export const useVoteStore = defineStore('vote', () => {
         fetchPolicy: 'network-only',
       })
       
-      console.log('GraphQL response:', data);
       const v = data?.vote
-      console.log('Vote data:', v);
       
       state.initialValues = v
         ? { 

@@ -1,5 +1,5 @@
 <template>
-  <PrimeForm v-slot="$form" :initialValues :resolver @submit="submit" class="flex flex-col gap-4 w-full">
+  <Form v-slot="$form" :initialValues :resolver @submit="onSubmit" class="flex flex-col gap-4 w-full">
     <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter question information.</span>
     <div class="mb-4">
       <div class="flex items-center gap-4 mb-1">
@@ -10,48 +10,41 @@
         {{ $form.title.error?.message }}
       </Message>
     </div>
-    <FormField v-slot="$field" name="description">
-      <div class="flex items-center gap-4 mb-1">
-        <label for="description" class="font-semibold w-24">Description</label>
-        <Editor 
-          id="description" 
-          v-model="$field.value" 
-          class="flex-auto" 
-          rows="4" 
-        />
-      </div>
-      <Message v-if="$field.invalid" severity="error" size="small" variant="simple" class="ml-28">
-        {{ $field.error?.message }}
-      </Message>
-    </FormField>
+
+    <div class="flex items-center gap-4 mb-1">
+      <label for="description" class="font-semibold w-24">Description</label>
+      <Editor name="description" class="flex-auto" rows="4" />
+    </div>
+
     <div class="text-center">
       <RouterLink :to="`/manage/question/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
-      <Button type="submit" severity="Success" label="Submit" />
+      <Button type="submit" :loading="submitting" :label="submitText" severity="Success" icon="pi pi-save" />
     </div>
-  </PrimeForm>
+  </Form>
 </template>
 
-<script>
-import { Form as PrimeForm, FormField } from '@primevue/forms';
+<script setup>
+import { Form } from '@primevue/forms';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Editor from 'primevue/editor';
-import Message from 'primevue/message';
+import Message from 'primevue/message'
+import { computed } from 'vue'
 
-export default {
-  components: {
-    PrimeForm,
-    FormField,
-    Button,
-    InputText,
-    Editor,
-    Message
-  },
-  props: {
-    initialValues: Object,
-    resolver: Function,
-    submit: Function,
-    uuid: String
-  }
+const props = defineProps({
+  uuid: { type: String, required: true },
+  initialValues: { type: Object, required: true },
+  submitting: { type: Boolean, default: false },
+  submitText: { type: String, default: 'Save' },
+  resolver: { type: Function, required: true }
+})
+
+const emit = defineEmits(['submit']);
+
+const submitText = computed(() => props.submitText);
+const uuid = computed(() => props.uuid);
+
+function onSubmit({ valid, values }) {
+  emit('submit', { valid, values })
 }
 </script>

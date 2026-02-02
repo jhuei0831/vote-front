@@ -5,7 +5,7 @@
       label="Create New Question" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push(`/manage/question/${uuid}/create`)"
+      @click="$router.push(`/manage/question/${uuid}/upsert`)"
     />
     
     <ApolloQuery
@@ -47,7 +47,7 @@
             <Column field="title" header="Title" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/question/${uuid}/update/${slotProps.data.id}`" 
+                  :to="`/manage/question/${uuid}/upsert/${slotProps.data.id}`" 
                   class="text-amber-700 hover:underline"
                 >
                   {{ slotProps.data.title }}

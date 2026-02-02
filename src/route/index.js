@@ -43,13 +43,8 @@ const routes = [
         props: true 
       },
       { 
-        path: 'question/:uuid/create', 
-        component: () => import('@/views/manage/question/Create.vue'), 
-        props: true 
-      },
-      { 
-        path: 'question/:uuid/update/:id', 
-        component: () => import('@/views/manage/question/Update.vue'), 
+        path: 'question/:uuid/upsert/:id?', 
+        component: () => import('@/views/manage/question/Upsert.vue'), 
         props: true 
       },
       { 
