@@ -5,7 +5,7 @@
       label="Create New Candidate" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push(`/manage/candidate/${uuid}/create`)"
+      @click="$router.push(`/manage/candidate/${uuid}/upsert`)"
     />
     
     <ApolloQuery
@@ -46,7 +46,7 @@
             <Column field="name" header="Name" :sortable="true">
               <template #body="slotProps">
                 <RouterLink 
-                  :to="`/manage/candidate/${uuid}/update/${slotProps.data.id}`" 
+                  :to="`/manage/candidate/${uuid}/upsert/${slotProps.data.id}`" 
                   class="text-amber-700 hover:underline"
                 >
                   {{ slotProps.data.name }}
@@ -86,7 +86,7 @@
     <Dialog v-model:visible="deleteCandidateDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="candidate">Are you sure you want to delete <b>{{ candidate.title }}</b>?</span>
+        <span v-if="candidate">Are you sure you want to delete <b>{{ candidate.name }}</b>?</span>
       </div>
       <template #footer>
         <Button label="No" icon="pi pi-times" text @click="deleteCandidateDialog = false" severity="secondary"

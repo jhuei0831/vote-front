@@ -23,14 +23,14 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast';
-import { useQuestionStore } from '@/stores/question'
+import { useCandidateStore } from '@/stores/candidate'
 import { z } from 'zod';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
-import Form from '@/components/question/Form.vue'
+import Form from '@/components/candidate/Form.vue'
 import Message from 'primevue/message'
 
 const route = useRoute()
-const store = useQuestionStore()
+const store = useCandidateStore()
 const toast = useToast();
 
 const props = defineProps(['uuid', 'id']);
@@ -52,8 +52,8 @@ const { state } = storeToRefs(store)
 
 const resolver = ref(zodResolver(
   z.object({
-    title: z.string().min(1, 'Title is required.'),
-    description: z.string().optional()
+    questionId: z.number({ invalid_type_error: 'Question is required.' }),
+    name: z.string().min(1, 'Name is required.'),
   })
 ));
 
@@ -73,7 +73,7 @@ async function handleSubmit({ valid, values }) {
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: 'Question updated successfully', 
+      detail: 'Candidate updated successfully', 
       life: 3000
     });
   } catch (e) {
@@ -82,7 +82,7 @@ async function handleSubmit({ valid, values }) {
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: e.message || 'Error updating question', 
+      detail: e.message || 'Error updating candidate', 
       life: 3000
     });
   }

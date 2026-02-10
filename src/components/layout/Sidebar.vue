@@ -168,6 +168,7 @@ const categories = computed(() => [
   { name: 'Edit', href: `/manage/vote/upsert/${voteStore.vote?.uuid}`, initial: 'E' },
   { name: 'Question', href: `/manage/question/${voteStore.vote?.uuid}`, initial: 'Q' },
   { name: 'Candidate', href: `/manage/candidate/${voteStore.vote?.uuid}`, initial: 'C' },
+  { name: 'Password', href: `/manage/password/${voteStore.vote?.uuid}`, initial: 'P' },
   { name: 'Ballot', href: '#', initial: 'B' },
 ])
 

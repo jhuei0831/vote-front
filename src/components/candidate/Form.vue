@@ -1,5 +1,5 @@
 <template>
-  <PrimeForm v-slot="$form" :initialValues :resolver @submit="submit" class="flex flex-col gap-4 w-full">
+  <PrimeForm v-slot="$form" :initialValues :resolver @submit="onSubmit" class="flex flex-col gap-4 w-full">
     <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter candidate information.</span>
     <div class="mb-4">
       <div class="flex items-center gap-4 mb-1">
@@ -30,40 +30,36 @@
     </div>
     <div class="text-center">
       <RouterLink :to="`/manage/candidate/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
-      <Button type="submit" severity="Success" label="Submit" />
+      <Button type="submit" :loading="submitting" :label="submitText" severity="Success" icon="pi pi-save" />
     </div>
   </PrimeForm>
 </template>
 
-<script>
-import { Form as PrimeForm, FormField } from '@primevue/forms';
+<script setup>
+import { Form as PrimeForm } from '@primevue/forms';
 import { useQuestionStore } from '@/stores/question';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
+import { computed } from 'vue'
 
-export default {
-  components: {
-    PrimeForm,
-    FormField,
-    Button,
-    InputText,
-    Message,
-    Select
-  },
-  props: {
-    initialValues: Object,
-    resolver: Function,
-    submit: Function,
-    uuid: String
-  },
-  setup() {
-    const questionStore = useQuestionStore();
-    
-    return {
-      questionStore,
-    };
-  }
+const questionStore = useQuestionStore();
+
+const props = defineProps({
+  uuid: { type: String, required: true },
+  initialValues: { type: Object, required: true },
+  submitting: { type: Boolean, default: false },
+  submitText: { type: String, default: 'Save' },
+  resolver: { type: Function, required: true }
+})
+
+const emit = defineEmits(['submit']);
+
+const submitText = computed(() => props.submitText);
+const uuid = computed(() => props.uuid);
+
+function onSubmit({ valid, values }) {
+  emit('submit', { valid, values })
 }
 </script>

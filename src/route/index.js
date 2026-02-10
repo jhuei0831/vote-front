@@ -54,14 +54,8 @@ const routes = [
         beforeEnter: candidateBeforeEnter,
       },
       { 
-        path: 'candidate/:uuid/create', 
-        component: () => import('@/views/manage/candidate/Create.vue'), 
-        props: true,
-        beforeEnter: candidateBeforeEnter,
-      },
-      { 
-        path: 'candidate/:uuid/update/:id', 
-        component: () => import('@/views/manage/candidate/Update.vue'), 
+        path: 'candidate/:uuid/upsert/:id?', 
+        component: () => import('@/views/manage/candidate/Upsert.vue'), 
         props: true,
         beforeEnter: candidateBeforeEnter,
       }

@@ -149,7 +149,7 @@ export default {
             ids: [this.question.id]
           },
           update: (store, { data: { deleteQuestion: _deleteQuestion } }) => {
-            // 更新本地緩存以反映刪除操作
+            // Update local cache to reflect the deletion
             const cachedData = store.readQuery({
               query: QUESTION_LIST,
               variables: {

@@ -39,8 +39,8 @@ export const CANDIDATE_LIST = gql`
 `;
 
 export const CANDIDATE_CREATE = gql`
-  mutation Candidates($candidate: CandidateCreate!) {
-    createCandidate(input: $candidate) {
+  mutation Candidates($input: CandidateCreate!) {
+    createCandidate(input: $input) {
       id
       questionId
       name
@@ -52,8 +52,8 @@ export const CANDIDATE_CREATE = gql`
 `;
 
 export const CANDIDATE_UPDATE = gql`
-  mutation Candidates($id: UInt64!, $candidate: CandidateUpdate!) {
-    updateCandidate(id: $id, input: $candidate) {
+  mutation Candidates($id: UInt64!, $input: CandidateUpdate!) {
+    updateCandidate(id: $id, input: $input) {
       id
       questionId
       name
