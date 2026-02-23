@@ -1,12 +1,50 @@
+import { computed, reactive, ref } from 'vue';
+
 import { defineStore } from 'pinia';
-import { ref, reactive, computed } from 'vue';
+
 import { apolloProvider } from '@/api/apollo';
-import { VOTE_VIEW, VOTE_LIST, VOTE_CREATE, VOTE_UPDATE } from '@/graphql/vote';
+import { VOTE_CREATE, VOTE_LIST, VOTE_UPDATE, VOTE_VIEW } from '@/graphql/vote';
+
+export interface VoteQueryResult {
+  votes: {
+    edges: {
+      node: {
+        uuid: string;
+        title: string;
+        description: string;
+        status: number;
+        startTime: string | null;
+        endTime: string | null;
+        creator: {
+          uuid: string;
+          name: string;
+        };
+      };
+    }[];
+    totalCount: number;
+  }[];
+}
+
+export interface VoteState {
+  uuid: string | null;
+  isEdit: boolean;
+  initialValues: {
+    uuid?: string;
+    title: string;
+    description: string;
+    status?: number;
+    startTime: Date | null;
+    endTime: Date | null;
+  };
+  loadingInitial: boolean;
+  submitting: boolean;
+  error: any;
+}
 
 export const useVoteStore = defineStore('vote', () => {
   // State
-  const vote = ref(null);
-  const state = reactive({
+  const vote = ref<VoteState['initialValues'] | null>(null);
+  const state = reactive<VoteState>({
     uuid: null,
     isEdit: false,
     initialValues: {
@@ -14,7 +52,7 @@ export const useVoteStore = defineStore('vote', () => {
       description: '',
       startTime: null,
       endTime: null
-    },
+    } ,
     loadingInitial: false,
     submitting: false,
     error: null,
@@ -32,11 +70,11 @@ export const useVoteStore = defineStore('vote', () => {
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'))
 
   // Actions
-  function setCurrentVote(newVote) {
+  function setCurrentVote(newVote: VoteState['initialValues'] | null) {
     vote.value = newVote;
   }
   
-  async function init(uuid) {
+  async function init(uuid: VoteState['uuid']) {
     // Initialize: set mode & load initial values (only in edit mode)
     console.log('Init called with uuid:', uuid);
     state.uuid = uuid ?? null
@@ -82,7 +120,7 @@ export const useVoteStore = defineStore('vote', () => {
     }
   }
 
-  async function submit(values) {
+  async function submit(values: VoteState['initialValues']) {
     state.submitting = true
     state.error = null
     try {
@@ -97,7 +135,15 @@ export const useVoteStore = defineStore('vote', () => {
               startTime: values.startTime ? values.startTime.toISOString() : null,
               endTime: values.endTime ? values.endTime.toISOString() : null
             } 
-          }
+          },
+          refetchQueries: [
+            {
+              query: VOTE_LIST,
+              variables: {
+                withQuestions: false
+              }
+            }
+          ]
         })
         return res.data?.createVote
       } else {
@@ -140,7 +186,7 @@ export const useVoteStore = defineStore('vote', () => {
     state.error = null
   }
 
-  async function fetchVoteByUuid(uuid) {
+  async function fetchVoteByUuid(uuid: VoteState['uuid']) {
     if (!uuid) return;
     
     try {

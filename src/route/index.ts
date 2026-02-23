@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useQuestionStore } from '@/stores/question'
 
 // candidate route guard to fetch questions before entering
-const candidateBeforeEnter = async (to) => {
+const candidateBeforeEnter = async (to: any) => {
   const questionStore = useQuestionStore();
   await questionStore.fetchQuestionOptions(to.params.uuid);
 }

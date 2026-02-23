@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <Message v-if="state.error" severity="error" :closable="false">
-      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error.message }}
+      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error?.message }}
     </Message>
 
     <div v-if="state.loadingInitial" class="p-mb-3">Loading...</div>
@@ -39,7 +39,7 @@ onMounted(() => {
   store.init(props.uuid, props.id)
 })
 
-// 若路由變更（例如由新增 -> 編輯），重新 init
+// Listen to route changes to re-initialize the store (e.g., when navigating from edit to create)
 watch(() => route.fullPath, () => {
   store.init(props.uuid, props.id)
 })

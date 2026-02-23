@@ -9,10 +9,39 @@ import {
   QUESTION_OPTIONS 
 } from "@/graphql/question";
 
+export interface QuestionQueryResult {
+  questions: {
+    edges: {
+      node: {
+        id: number;
+        title: string;
+        description: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }[];
+    totalCount: number;
+  }[];
+}
+
+export interface QuestionState {
+  uuid: string | null;
+  id: number | null;
+  isEdit: boolean;
+  initialValues: {
+    id?: number;
+    title: string;
+    description: string;
+  };
+  loadingInitial: boolean;
+  submitting: boolean;
+  error: any;
+}
+
 export const useQuestionStore = defineStore("question", () => {
   // State
-  const questions = ref([]);
-  const state = reactive({
+  const questions = ref<QuestionState['initialValues'][]>([]);
+  const state = reactive<QuestionState>({
     uuid: null,
     id: null,
     isEdit: false,
@@ -27,7 +56,7 @@ export const useQuestionStore = defineStore("question", () => {
 
   // Getters
   const questionOptions = computed(() => {
-    return questions.value.map(question => ({
+    return questions.value.map((question: QuestionState['initialValues']) => ({
       label: question.title,
       value: question.id
     }));
@@ -42,7 +71,7 @@ export const useQuestionStore = defineStore("question", () => {
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'))
 
   // Actions
-  async function init(uuid, id) {
+  async function init(uuid: QuestionState['uuid'], id: QuestionState['id']) {
     // Initialize: set mode & load initial values (only in edit mode)
     state.uuid = uuid ?? null
     state.id = id ?? null
@@ -86,7 +115,7 @@ export const useQuestionStore = defineStore("question", () => {
     }
   }
 
-  async function submit(values) {
+  async function submit(values: QuestionState['initialValues']) {
     state.submitting = true
     state.error = null
     try {
@@ -100,7 +129,19 @@ export const useQuestionStore = defineStore("question", () => {
               title: values.title,
               description: values.description,
             }
-          }
+          },
+          refetchQueries: [
+            {
+              query: QUESTION_LIST,
+              variables: {
+                questionQuery: {
+                  voteId: state.uuid,
+                  first: 999
+                },
+                withCandidates: false  
+              }
+            }
+          ]
         })
         return res.data?.createQuestion
       } else {
@@ -166,7 +207,7 @@ export const useQuestionStore = defineStore("question", () => {
     state.error = null
   }
 
-  async function fetchQuestion(id) {
+  async function fetchQuestion(id: QuestionState['id']) {
     if (!id) return;
         
     try {
@@ -186,7 +227,7 @@ export const useQuestionStore = defineStore("question", () => {
     }
   }
 
-  async function fetchQuestionOptions(uuid) {
+  async function fetchQuestionOptions(uuid: QuestionState['uuid']) {
     if (!uuid) return;
         
     try {

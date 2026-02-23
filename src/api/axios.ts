@@ -1,19 +1,19 @@
 import axios from 'axios'
 
-// 創建 axios 實例
+// create an axios instance with default configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL + '/v1',
   timeout: 10000,
-  withCredentials: true, // 允許攜帶憑證（cookies）
+  withCredentials: true, // allow sending cookies with CORS requests
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// 請求攔截器
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // 可以在這裡添加 token 或其他請求頭
+    // add token to headers if exists
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -25,18 +25,18 @@ api.interceptors.request.use(
   }
 )
 
-// 響應攔截器
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
     return response.data
   },
   (error) => {
-    // 處理錯誤響應
+    // handle error response
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // 未授權，清除登入狀態並導向登入頁
-          console.error('未授權，請重新登入')
+          // Unauthorized, clear login state and redirect to login page
+          console.error('Unauthorized, please log in again')
           localStorage.removeItem('token')
           localStorage.removeItem('user')
           if (window.location.pathname !== '/login') {
@@ -44,21 +44,21 @@ api.interceptors.response.use(
           }
           break
         case 403:
-          console.error('沒有權限訪問')
+          console.error('Forbidden, you do not have permission to access this resource')
           break
         case 404:
-          console.error('請求的資源不存在')
+          console.error('Requested resource not found')
           break
         case 500:
-          console.error('伺服器錯誤')
+          console.error('Internal server error, please try again later')
           break
         default:
-          console.error('請求失敗：', error.response.data?.message || error.message)
+          console.error('Request failed:', error.response.data?.message || error.message)
       }
     } else if (error.request) {
-      console.error('無法連接到伺服器')
+      console.error('Unable to connect to the server, please check your network connection')
     } else {
-      console.error('請求錯誤：', error.message)
+      console.error('Request error:', error.message)
     }
     return Promise.reject(error)
   }

@@ -8,81 +8,69 @@
       @click="$router.push(`/manage/candidate/${uuid}/upsert`)"
     />
     
-    <ApolloQuery
-      :query="_candidateQuery"
-      :variables="{ 
-        query: {
-          voteId: uuid,
-          first: 999
-        } 
-      }"
-    >
-      <template v-slot="{ result: { loading, error, data } }">
-        <!-- Loading -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <div class="text-lg text-gray-600">Loading...</div>
-        </div>
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <div class="text-lg text-gray-600">Loading...</div>
+    </div>
 
-        <!-- Error -->
-        <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div class="text-red-800">An error occurred</div>
-        </div>
+    <!-- Error -->
+    <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div class="text-red-800">An error occurred</div>
+    </div>
 
-        <!-- Result -->
-        <div v-else-if="data && data.candidates && data.candidates[0] && data.candidates[0].edges.length > 0" class="result apollo">
-          <DataTable 
-            :value="data.candidates[0].edges.map(edge => edge.node)" 
-            striped-rows
-            scrollable
-            scroll-height="flex"
-            responsive-layout="scroll"
-            paginator
-            :rows="5"
-            :total-records="data.candidates[0].totalCount"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-            :rows-per-page-options="[5, 10, 20, 50]"
-          >
-            <Column field="id" header="ID" :sortable="true"></Column>
-            <Column field="name" header="Name" :sortable="true">
-              <template #body="slotProps">
-                <RouterLink 
-                  :to="`/manage/candidate/${uuid}/upsert/${slotProps.data.id}`" 
-                  class="text-amber-700 hover:underline"
-                >
-                  {{ slotProps.data.name }}
-                </RouterLink>
-              </template>
-            </Column>
-            <Column field="questionId" header="Question" :sortable="true">
-              <template #body="slotProps">
-                {{ questionStore.questionMap.get(slotProps.data.questionId) || 'N/A' }}
-              </template>
-            </Column>
-            <Column field="createdAt" header="Created At" :sortable="true">
-              <template #body="slotProps">
-                {{ formatDate(slotProps.data.createdAt) }}
-              </template>
-            </Column>
-            <Column field="updatedAt" header="Updated At" :sortable="true">
-              <template #body="slotProps">
-                {{ formatDate(slotProps.data.updatedAt) }}
-              </template>
-            </Column>
-            <Column :exportable="false">
-              <template #body="slotProps">
-                <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-                  @click="confirmDeleteCandidate(slotProps.data)" />
-              </template>
-            </Column>
-          </DataTable>
-        </div>
+    <!-- Result -->
+    <div v-else-if="candidates && candidates.length > 0" class="result apollo">
+      <DataTable 
+        :value="candidates" 
+        striped-rows
+        scrollable
+        scroll-height="flex"
+        responsive-layout="scroll"
+        paginator
+        :rows="5"
+        :total-records="totalCount"
+        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+        :rows-per-page-options="[5, 10, 20, 50]"
+      >
+        <Column field="id" header="ID" :sortable="true"></Column>
+        <Column field="name" header="Name" :sortable="true">
+          <template #body="slotProps">
+            <RouterLink 
+              :to="`/manage/candidate/${uuid}/upsert/${slotProps.data.id}`" 
+              class="text-amber-700 hover:underline"
+            >
+              {{ slotProps.data.name }}
+            </RouterLink>
+          </template>
+        </Column>
+        <Column field="questionId" header="Question" :sortable="true">
+          <template #body="slotProps">
+            {{ questionStore.questionMap.get(slotProps.data.questionId) || 'N/A' }}
+          </template>
+        </Column>
+        <Column field="createdAt" header="Created At" :sortable="true">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.createdAt) }}
+          </template>
+        </Column>
+        <Column field="updatedAt" header="Updated At" :sortable="true">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.updatedAt) }}
+          </template>
+        </Column>
+        <Column :exportable="false">
+          <template #body="slotProps">
+            <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
+              @click="confirmDeleteCandidate(slotProps.data)" />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
 
-        <!-- No result -->
-        <div v-else class="p-6 text-center text-gray-500">
-          <div class="text-lg">No candidates found</div>
-        </div>
-      </template>
-    </ApolloQuery>
+    <!-- No result -->
+    <div v-else class="p-6 text-center text-gray-500">
+      <div class="text-lg">No candidates found</div>
+    </div>
     <Dialog v-model:visible="deleteCandidateDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
@@ -97,111 +85,79 @@
   </div>
 </template>
 
-<script>
-import { ApolloQuery } from '@vue/apollo-components'
-import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate.js'
-import { useCandidateStore } from '@/stores/candidate';
-import { useQuestionStore } from '@/stores/question';
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
-import Tag from 'primevue/tag';
+import { useToast } from 'primevue/usetoast';
 
-export default {
-  components: {
-    ApolloQuery,
-    DataTable,
-    Column,
-    Button,
-    Dialog,
-    Tag
-  },
-  props: {
-    uuid: {
-      type: String,
-      required: true
-    }
-  },
-  setup() {
-    const candidateStore = useCandidateStore();
-    const questionStore = useQuestionStore();
-    return {
-      candidateStore,
-      questionStore,
-    };
-  },
-  data() {
-    return {
-      _candidateQuery: CANDIDATE_LIST,
-      deleteCandidateDialog: false,
-      candidate: null,
-      questions: []
-    }
-  },
-  methods: {
-    formatDate(dateString) {
-      if (!dateString) return '-'
-      return new Date(dateString).toLocaleString()
-    },
-    confirmDeleteCandidate(candidate) {
-      this.candidate = candidate;
-      this.deleteCandidateDialog = true;
-    },
-    async deleteCandidate() {
-      try {
-        const result = await this.$apollo.mutate({
-          mutation: CANDIDATE_DELETE,
-          variables: {
-            ids: [this.candidate.id]
-          },
-          update: (store, { data: { deleteCandidate: _deleteCandidate } }) => {
-            // 更新本地緩存以反映刪除操作
-            const cachedData = store.readQuery({
-              query: CANDIDATE_LIST,
-              variables: {
-                query: {
-                  voteId: this.uuid,
-                  first: 999
-                },
-              }
-            });
-            
-            // Create a deep copy to avoid mutating read-only cache
-            const data = {
-              candidates: [{
-                ...cachedData.candidates[0],
-                edges: cachedData.candidates[0].edges.filter(
-                  edge => edge.node.id !== this.candidate.id
-                ),
-                totalCount: cachedData.candidates[0].totalCount - 1
-              }]
-            };
+import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate';
+import { CandidateQueryResult, CandidateState } from '@/stores/candidate';
+import { useQuestionStore } from '@/stores/question';
+import { apolloProvider } from '@/api/apollo';
+import { provideApolloClient, useQuery } from '@vue/apollo-composable';
 
-            store.writeQuery({
-              query: CANDIDATE_LIST,
-              data,
-              variables: {
-                query: {
-                  voteId: this.uuid,
-                  first: 999
-                },
-              }
-            });
-          }
-        });
-        console.log(result);
-        console.log('Deleting candidate:', this.candidate);
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Candidate deleted successfully.', life: 3000 });
-      } catch (error) {
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete candidate.', life: 3000 });
-        console.error('Error deleting candidate:', error);
-      } finally {
-        this.deleteCandidateDialog = false;
-        this.candidate = null;
+const toast = useToast();
+const props = defineProps(['uuid']);
+
+const questionStore = useQuestionStore();
+const candidate = ref<CandidateState['initialValues'] | null>(null);
+const deleteCandidateDialog = ref(false);
+
+// use useQuery composable API
+const { result, loading, error, refetch } = provideApolloClient(apolloProvider.defaultClient)(() => 
+  useQuery<CandidateQueryResult>(CANDIDATE_LIST, {
+    query: {
+      voteId: props.uuid,
+      first: 999
+    },
+    withQuestions: false
+  })
+);
+
+// use computed properties to extract votes and totalCount from result
+const candidates = computed(() => {
+  if (!result.value?.candidates?.[0]?.edges) return [];
+  return result.value.candidates[0].edges.map(edge => edge.node);
+});
+
+const totalCount = computed(() => {
+  return result.value?.candidates?.[0]?.totalCount ?? 0;
+});
+
+function formatDate(dateString: string | null | undefined) {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleString()
+}
+
+function confirmDeleteCandidate(candidateData: CandidateState['initialValues']) {
+  candidate.value = candidateData;
+  deleteCandidateDialog.value = true;
+}
+
+async function deleteCandidate() {
+  try {
+    const result = await apolloProvider.defaultClient.mutate({
+      mutation: CANDIDATE_DELETE,
+      variables: {
+        ids: [candidate.value?.id]
       }
-    }
+    });
+
+    await refetch();
+    console.log(result);
+    console.log('Deleting candidate:', candidate.value);
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Candidate deleted successfully.', life: 3000 });
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete candidate.', life: 3000 });
+    console.error('Error deleting candidate:', error);
+  } finally {
+    deleteCandidateDialog.value = false;
+    candidate.value = null;
   }
 }
+
 
 </script>

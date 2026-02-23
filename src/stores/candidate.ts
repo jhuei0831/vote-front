@@ -8,9 +8,38 @@ import {
 } from "@/graphql/candidate";
 import { computed, reactive } from "vue";
 
+export interface CandidateQueryResult {
+  candidates: {
+    edges: {
+      node: {
+        id: number;
+        questionId: number;
+        name: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }[];
+    totalCount: number;
+  }[];
+}
+
+export interface CandidateState {
+  uuid: string | null;
+  id: number | null;
+  isEdit: boolean;
+  initialValues: {
+    id?: number;
+    questionId: number;
+    name: string;
+  };
+  loadingInitial: boolean;
+  submitting: boolean;
+  error: any;
+}
+
 export const useCandidateStore = defineStore("candidate", () => {
   // State
-  const state = reactive({
+  const state = reactive<CandidateState>({
     uuid: null,
     id: null,
     isEdit: false,
@@ -27,7 +56,7 @@ export const useCandidateStore = defineStore("candidate", () => {
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'));
 
   // Actions
-  async function init(uuid, id) {
+  async function init(uuid: CandidateState['uuid'], id: CandidateState['id']) {
     
     // Initialize: set mode & load initial values (only in edit mode)
     state.uuid = uuid ?? null
@@ -71,9 +100,10 @@ export const useCandidateStore = defineStore("candidate", () => {
     }
   }
 
-  async function submit(values) {
+  async function submit(values: CandidateState['initialValues']) {
     state.submitting = true
     state.error = null
+    
     try {
       if (!state.isEdit) {
         // Create
@@ -159,7 +189,7 @@ export const useCandidateStore = defineStore("candidate", () => {
     state.error = null
   }
 
-  async function fetchCandidate(id) {
+  async function fetchCandidate(id: CandidateState['id']) {
     if (!id) {
       console.error('id must defined');
       return;

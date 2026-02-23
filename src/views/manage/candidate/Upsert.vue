@@ -8,7 +8,7 @@
     <Form
       v-if="!state.loadingInitial"
       :key="state.uuid || 'create'"
-      :uuid="state.uuid"
+      :uuid="state.uuid ?? 'null'"
       :initialValues="state.initialValues"
       :resolver="resolver"
       :submitting="state.submitting"
@@ -18,12 +18,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast';
-import { useCandidateStore } from '@/stores/candidate'
+import { useCandidateStore, CandidateState } from '@/stores/candidate'
 import { z } from 'zod';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import Form from '@/components/candidate/Form.vue'
@@ -39,7 +39,7 @@ onMounted(() => {
   store.init(props.uuid, props.id)
 })
 
-// 若路由變更（例如由新增 -> 編輯），重新 init
+// Listen to route changes to re-initialize the store (e.g., when navigating from edit to create)
 watch(() => route.fullPath, () => {
   store.init(props.uuid, props.id)
 })
@@ -52,16 +52,16 @@ const { state } = storeToRefs(store)
 
 const resolver = ref(zodResolver(
   z.object({
-    questionId: z.number({ invalid_type_error: 'Question is required.' }),
+    questionId: z.number({ error: 'Question is required.' }),
     name: z.string().min(1, 'Name is required.'),
   })
 ));
 
-async function handleSubmit({ valid, values }) {
+async function handleSubmit({ valid, values }: { valid: boolean; values: CandidateState['initialValues'] }) {
   try {
     console.log('Form submission:', { valid, values });
-    console.log('Store initialValues:', state.initialValues);
-    console.log('Is edit mode:', state.isEdit);
+    console.log('Store initialValues:', state.value.initialValues);
+    console.log('Is edit mode:', state.value.isEdit);
     
     if (!valid) {
       console.log('Form validation failed');
@@ -69,20 +69,20 @@ async function handleSubmit({ valid, values }) {
     }
     
     await store.submit(values)
-    // 成功後提示
+    // Show success toast after successful submission
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: 'Candidate updated successfully', 
+      detail: state.value.isEdit ? 'Candidate updated successfully' : 'Candidate created successfully', 
       life: 3000
     });
   } catch (e) {
-    // 錯誤已在 state.error，可視需要加 toast
+    // Errors are already in state.error, but you can add a toast if needed
     console.error('Submit error:', e)
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: e.message || 'Error updating candidate', 
+      detail: state.value.isEdit ? 'Error updating candidate' : 'Error creating candidate', 
       life: 3000
     });
   }

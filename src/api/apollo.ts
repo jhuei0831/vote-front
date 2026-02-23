@@ -2,7 +2,7 @@ import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client/core'
 import { createApolloProvider } from '@vue/apollo-option'
 
 function getHeaders() {
-  const headers = {};
+  const headers: Record<string, string> = {};
   const token = localStorage.getItem("token");
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -15,8 +15,10 @@ function getHeaders() {
 const httpLink = new HttpLink({
   // You should use an absolute URL here
   uri: import.meta.env.VITE_API_BASE_URL + '/query',
-  fetch: (uri, options) => {
-    options.headers = getHeaders();
+  fetch: (uri: RequestInfo | URL, options?: RequestInit) => {
+    if (options) {
+      options.headers = getHeaders();
+    }
     return fetch(uri, options);
   },
 })

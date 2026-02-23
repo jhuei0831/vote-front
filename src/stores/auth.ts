@@ -5,14 +5,15 @@ import {
   login as apiLogin, 
   logout as apiLogout, 
   checkAuth as apiCheckAuth,
-  getCurrentUser 
+  getCurrentUser,
+  type LoginCredentials
 } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   
   // State
-  const user = ref(JSON.parse(localStorage.getItem('user')) || null)
+  const user = ref(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null)
   const token = ref(localStorage.getItem('token') || null)
 
   // Getters
@@ -20,23 +21,23 @@ export const useAuthStore = defineStore('auth', () => {
   const userName = computed(() => user.value?.name || user.value?.account || '')
 
   // Actions
-  const login = async (credentials) => {
+  const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await apiLogin(credentials)
+      const response: any = await apiLogin(credentials)
       
-      console.log('登入 API 回應:', response) // Debug: 查看實際回應格式
+      console.log('Login API Response:', response)
       
-      // 處理 token（可能在 response.token 或 response.data.token）
+      // Handle token (可能在 response.token 或 response.data.token)
       const responseToken = response?.token || response?.data?.token
       if (responseToken) {
         token.value = responseToken
         localStorage.setItem('token', responseToken)
-        console.log('Token 已儲存:', responseToken)
+        console.log('Token saved:', responseToken)
       } else {
-        console.warn('API 回應中未找到 token:', response)
+        console.warn('Token not found in API response:', response)
       }
       
-      // 處理用戶資訊（可能在 response.user 或 response.data.user 或 response.data）
+      // Handle user information (可能在 response.user 或 response.data.user 或 response.data)
       await fetchUser()
       
       return response
@@ -52,7 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       apiCheckAuth()
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Token 驗證失敗:', error)
       clearAuth()
       return false
@@ -83,10 +84,10 @@ export const useAuthStore = defineStore('auth', () => {
     
     try {
       const userData = await getCurrentUser()
-      user.value = userData.user
+      user.value = userData.data
       
-      localStorage.setItem('user', JSON.stringify(userData.user))
-    } catch (error) {
+      localStorage.setItem('user', JSON.stringify(userData.data))
+    } catch (error: any) {
       console.error('獲取用戶資訊失敗:', error)
       // 如果 token 無效，清除認證狀態
       if (error.response?.status === 401) {
