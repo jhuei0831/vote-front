@@ -72,7 +72,7 @@
     <Dialog v-model:visible="deleteQuestionDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="question">Are you sure you want to delete <b>{{ question.title }}</b>?</span>
+        <span v-if="question">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
         <Button label="No" icon="pi pi-times" text @click="deleteQuestionDialog = false" severity="secondary"
@@ -84,78 +84,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import Button from 'primevue/button'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+import Dialog from 'primevue/dialog'
 
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import { useToast } from 'primevue/usetoast';
+import TableSkeleton from '@/components/widget/TableSkeleton.vue'
+import { useEntityList } from '@/composables/useEntityList'
+import { useEntityDelete } from '@/composables/useEntityDelete'
+import { QUESTION_LIST, QUESTION_DELETE } from '@/graphql/question'
+import { QuestionState, QuestionQueryResult } from '@/stores/question'
+import { formatDate } from '@/utils/date'
 
-import TableSkeleton from '@/components/widget/TableSkeleton.vue';
-import { apolloProvider } from '@/api/apollo';
-import { QUESTION_LIST, QUESTION_DELETE } from '@/graphql/question';
-import { QuestionState, QuestionQueryResult } from '@/stores/question';
-import { provideApolloClient, useQuery } from '@vue/apollo-composable';
+const props = defineProps(['uuid'])
 
-const toast = useToast();
-
-const props = defineProps(['uuid']);
-const deleteQuestionDialog = ref(false);
-const question = ref<QuestionState['initialValues'] | null>(null);
-
-// use useQuery composable API
-const { result, loading, error, refetch } = provideApolloClient(apolloProvider.defaultClient)(() => 
-  useQuery<QuestionQueryResult>(QUESTION_LIST, {
+const { loading, error, refetch, items: questions, totalCount } = useEntityList<QuestionQueryResult, any>({
+  query: QUESTION_LIST,
+  variables: {
     questionQuery: {
       voteId: props.uuid,
       first: 999
     },
     withCandidates: false
-  })
-);
+  },
+  extractEdges: (result) => result?.questions?.[0]?.edges,
+  getTotalCount: (result) => result?.questions?.[0]?.totalCount ?? 0
+})
 
-// use computed properties to extract votes and totalCount from result
-const questions = computed(() => {
-  if (!result.value?.questions?.[0]?.edges) return [];
-  return result.value.questions[0].edges.map(edge => edge.node);
-});
-
-const totalCount = computed(() => {
-  return result.value?.questions?.[0]?.totalCount ?? 0;
-});
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleString();
-}
-
-function confirmDeleteQuestion(questionData: QuestionState['initialValues']) {
-  question.value = questionData;
-  deleteQuestionDialog.value = true;
-}
-
-async function deleteQuestion() {
-  try {
-    const result = await apolloProvider.defaultClient.mutate({
-      mutation: QUESTION_DELETE,
-      variables: {
-        ids: [question.value?.id]
-      },
-    });
-    
-    // Refetch the list after deletion to get the updated data
-    await refetch();
-
-    console.log(result);
-    console.log('Deleting question:', question.value);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Question deleted successfully.', life: 3000 });
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete question.', life: 3000 });
-    console.error('Error deleting question:', error);
-  } finally {
-    deleteQuestionDialog.value = false;
-    question.value = null;
-  }
-}
+const {
+  deleteDialog: deleteQuestionDialog,
+  entity: question,
+  confirmDelete: confirmDeleteQuestion,
+  executeDelete: deleteQuestion,
+  getDisplayName
+} = useEntityDelete<QuestionState['initialValues']>({
+  mutation: QUESTION_DELETE,
+  entityName: 'Question',
+  getDisplayName: (question) => question.title ?? 'this question',
+  getDeleteVariables: (question) => ({ ids: [question.id] }),
+  onSuccess: async () => { await refetch() }
+})
 </script>

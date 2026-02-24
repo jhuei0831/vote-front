@@ -19,15 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+import { onBeforeUnmount, onMounted, watch } from 'vue';
+
+import { storeToRefs } from 'pinia';
+import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast';
-import { useCandidateStore, CandidateState } from '@/stores/candidate'
+import { useRoute } from 'vue-router';
 import { z } from 'zod';
+
+import Form from '@/components/candidate/Form.vue';
+import { CandidateState, useCandidateStore } from '@/stores/candidate';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
-import Form from '@/components/candidate/Form.vue'
-import Message from 'primevue/message'
 
 const route = useRoute()
 const store = useCandidateStore()
@@ -50,12 +52,12 @@ onBeforeUnmount(() => {
 
 const { state } = storeToRefs(store)
 
-const resolver = ref(zodResolver(
+const resolver = zodResolver(
   z.object({
-    questionId: z.number({ error: 'Question is required.' }),
-    name: z.string().min(1, 'Name is required.'),
+    questionId: z.number().min(1, { message: 'Question is required.' }),
+    name: z.string().min(1, { message: 'Name is required.' }),
   })
-));
+);
 
 async function handleSubmit({ valid, values }: { valid: boolean; values: CandidateState['initialValues'] }) {
   try {

@@ -74,7 +74,7 @@
     <Dialog v-model:visible="deleteCandidateDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="candidate">Are you sure you want to delete <b>{{ candidate.name }}</b>?</span>
+        <span v-if="candidate">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
         <Button label="No" icon="pi pi-times" text @click="deleteCandidateDialog = false" severity="secondary"
@@ -86,78 +86,45 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import { useToast } from 'primevue/usetoast';
+import Button from 'primevue/button'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+import Dialog from 'primevue/dialog'
 
-import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate';
-import { CandidateQueryResult, CandidateState } from '@/stores/candidate';
-import { useQuestionStore } from '@/stores/question';
-import { apolloProvider } from '@/api/apollo';
-import { provideApolloClient, useQuery } from '@vue/apollo-composable';
+import { useEntityList } from '@/composables/useEntityList'
+import { useEntityDelete } from '@/composables/useEntityDelete'
+import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate'
+import { CandidateQueryResult, CandidateState } from '@/stores/candidate'
+import { useQuestionStore } from '@/stores/question'
+import { formatDate } from '@/utils/date'
 
-const toast = useToast();
-const props = defineProps(['uuid']);
+const props = defineProps(['uuid'])
+const questionStore = useQuestionStore()
 
-const questionStore = useQuestionStore();
-const candidate = ref<CandidateState['initialValues'] | null>(null);
-const deleteCandidateDialog = ref(false);
-
-// use useQuery composable API
-const { result, loading, error, refetch } = provideApolloClient(apolloProvider.defaultClient)(() => 
-  useQuery<CandidateQueryResult>(CANDIDATE_LIST, {
+const { loading, error, refetch, items: candidates, totalCount } = useEntityList<CandidateQueryResult, any>({
+  query: CANDIDATE_LIST,
+  variables: {
     query: {
       voteId: props.uuid,
       first: 999
     },
     withQuestions: false
-  })
-);
+  },
+  extractEdges: (result) => result?.candidates?.[0]?.edges,
+  getTotalCount: (result) => result?.candidates?.[0]?.totalCount ?? 0
+})
 
-// use computed properties to extract votes and totalCount from result
-const candidates = computed(() => {
-  if (!result.value?.candidates?.[0]?.edges) return [];
-  return result.value.candidates[0].edges.map(edge => edge.node);
-});
-
-const totalCount = computed(() => {
-  return result.value?.candidates?.[0]?.totalCount ?? 0;
-});
-
-function formatDate(dateString: string | null | undefined) {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
-
-function confirmDeleteCandidate(candidateData: CandidateState['initialValues']) {
-  candidate.value = candidateData;
-  deleteCandidateDialog.value = true;
-}
-
-async function deleteCandidate() {
-  try {
-    const result = await apolloProvider.defaultClient.mutate({
-      mutation: CANDIDATE_DELETE,
-      variables: {
-        ids: [candidate.value?.id]
-      }
-    });
-
-    await refetch();
-    console.log(result);
-    console.log('Deleting candidate:', candidate.value);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Candidate deleted successfully.', life: 3000 });
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete candidate.', life: 3000 });
-    console.error('Error deleting candidate:', error);
-  } finally {
-    deleteCandidateDialog.value = false;
-    candidate.value = null;
-  }
-}
-
-
+const {
+  deleteDialog: deleteCandidateDialog,
+  entity: candidate,
+  confirmDelete: confirmDeleteCandidate,
+  executeDelete: deleteCandidate,
+  getDisplayName
+} = useEntityDelete<CandidateState['initialValues']>({
+  mutation: CANDIDATE_DELETE,
+  entityName: 'Candidate',
+  getDisplayName: (candidate) => candidate.name ?? 'this candidate',
+  getDeleteVariables: (candidate) => ({ ids: [candidate.id] }),
+  onSuccess: async () => { await refetch() }
+})
 </script>

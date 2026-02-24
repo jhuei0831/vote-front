@@ -77,7 +77,7 @@
     <Dialog v-model:visible="deleteVoteDialog" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="vote">Are you sure you want to delete <b>{{ vote.title }}</b>?</span>
+        <span v-if="vote">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
         <Button label="No" icon="pi pi-times" text @click="deleteVoteDialog = false" severity="secondary"
@@ -89,103 +89,54 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import Button from 'primevue/button'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
 
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import Tag from 'primevue/tag';
-import { useToast } from 'primevue/usetoast';
+import TableSkeleton from '@/components/widget/TableSkeleton.vue'
+import { useEntityList } from '@/composables/useEntityList'
+import { useEntityDelete } from '@/composables/useEntityDelete'
+import { VOTE_DELETE, VOTE_LIST } from '@/graphql/vote'
+import { useVoteStore, VoteQueryResult, VoteState } from '@/stores/vote'
+import { formatDate } from '@/utils/date'
 
-import { apolloProvider } from '@/api/apollo';
-import TableSkeleton from '@/components/widget/TableSkeleton.vue';
-import { VOTE_DELETE, VOTE_LIST } from '@/graphql/vote';
-import { useVoteStore, VoteQueryResult, VoteState } from '@/stores/vote';
-import { provideApolloClient, useQuery } from '@vue/apollo-composable';
+const voteStore = useVoteStore()
+voteStore.clearVote()
 
-const voteStore = useVoteStore();
-const toast = useToast();
-voteStore.clearVote();
-
-// use useQuery composable API
-const { result, loading, error, refetch } = provideApolloClient(apolloProvider.defaultClient)(() => 
-  useQuery<VoteQueryResult>(VOTE_LIST, {
-    vote: {
-      first: 999
-    },
+const { loading, error, refetch, items: votes, totalCount } = useEntityList<VoteQueryResult, any>({
+  query: VOTE_LIST,
+  variables: {
+    vote: { first: 999 },
     withQuestions: false
-  })
-);
+  },
+  extractEdges: (result) => result?.votes?.[0]?.edges,
+  getTotalCount: (result) => result?.votes?.[0]?.totalCount ?? 0
+})
 
-// use computed properties to extract votes and totalCount from result
-const votes = computed(() => {
-  if (!result.value?.votes?.[0]?.edges) return [];
-  return result.value.votes[0].edges.map(edge => edge.node);
-});
-
-const totalCount = computed(() => {
-  return result.value?.votes?.[0]?.totalCount ?? 0;
-});
-
-const deleteVoteDialog = ref(false);
-const vote = ref<VoteState['initialValues'] | null>(null);
+const {
+  deleteDialog: deleteVoteDialog,
+  entity: vote,
+  confirmDelete: confirmDeleteVote,
+  executeDelete: deleteVote,
+  getDisplayName
+} = useEntityDelete<VoteState['initialValues']>({
+  mutation: VOTE_DELETE,
+  entityName: 'Vote',
+  getDisplayName: (vote) => vote.title ?? 'this vote',
+  getDeleteVariables: (vote) => ({ uuid: [vote.uuid] }),
+  onSuccess: async () => { await refetch() }
+})
 
 function getSeverity(vote: VoteState['initialValues']) {
   switch (vote.status) {
     case 0:
-      return 'danger';
-
+      return 'danger'
     case 1:
-      return 'success';
-
+      return 'success'
     default:
-      return undefined;
-  }
-}
-
-function formatDate(dateString: string | null | undefined) {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
-
-function confirmDeleteVote(voteData: VoteState['initialValues']) {
-  vote.value = voteData;
-  deleteVoteDialog.value = true;
-}
-
-async function deleteVote() {
-  if (!vote.value) return;
-  
-  try {
-    await apolloProvider.defaultClient.mutate({
-      mutation: VOTE_DELETE,
-      variables: {
-        uuid: [vote.value.uuid]
-      }
-    });
-    
-    // Refetch the list after deletion to get the updated data
-    await refetch();
-    
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Success', 
-      detail: 'Vote deleted successfully.', 
-      life: 3000 
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete vote.';
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: errorMessage, 
-      life: 3000 
-    });
-    console.error('Error deleting vote:', error);
-  } finally {
-    deleteVoteDialog.value = false;
-    vote.value = null;
+      return undefined
   }
 }
 </script>

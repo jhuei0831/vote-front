@@ -35,23 +35,32 @@
   </PrimeForm>
 </template>
 
-<script setup>
-import { Form as PrimeForm } from '@primevue/forms';
-import { useQuestionStore } from '@/stores/question';
+<script setup lang="ts">
+import { computed } from 'vue';
+
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
-import { computed } from 'vue'
+
+import { CandidateState } from '@/stores/candidate';
+import { useQuestionStore } from '@/stores/question';
+import { Form as PrimeForm, FormSubmitEvent } from '@primevue/forms';
+import { zodResolver } from '@primevue/forms/resolvers/zod';
 
 const questionStore = useQuestionStore();
 
-const props = defineProps({
-  uuid: { type: String, required: true },
-  initialValues: { type: Object, required: true },
-  submitting: { type: Boolean, default: false },
-  submitText: { type: String, default: 'Save' },
-  resolver: { type: Function, required: true }
+interface Props {
+  uuid: string
+  initialValues: CandidateState['initialValues']
+  submitting?: boolean
+  submitText?: string
+  resolver: ReturnType<typeof zodResolver>
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  submitting: false,
+  submitText: 'Save'
 })
 
 const emit = defineEmits(['submit']);
@@ -59,7 +68,7 @@ const emit = defineEmits(['submit']);
 const submitText = computed(() => props.submitText);
 const uuid = computed(() => props.uuid);
 
-function onSubmit({ valid, values }) {
-  emit('submit', { valid, values })
+function onSubmit(event: FormSubmitEvent) {
+  emit('submit', { valid: event.valid, values: event.values });
 }
 </script>
