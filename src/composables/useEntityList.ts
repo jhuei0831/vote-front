@@ -10,9 +10,7 @@ interface UseEntityListOptions<TResult, TVariables> {
   getTotalCount: (result: TResult | undefined) => number
 }
 
-export function useEntityList<TResult, TVariables>(
-  options: UseEntityListOptions<TResult, TVariables>
-) {
+export function useEntityList<TResult, TVariables>(options: UseEntityListOptions<TResult, TVariables>) {
   const { result, loading, error, refetch } = provideApolloClient(apolloProvider.defaultClient)(() =>
     useQuery<TResult>(options.query, ref(options.variables))
   )

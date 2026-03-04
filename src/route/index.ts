@@ -58,6 +58,11 @@ const routes = [
         component: () => import('@/views/manage/candidate/Upsert.vue'), 
         props: true,
         beforeEnter: candidateBeforeEnter,
+      },
+      {
+        path: 'password/:uuid',
+        component: () => import('@/views/manage/password/Index.vue'),
+        props: true,
       }
     ], 
   },
