@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 import { apolloProvider } from '@/api/apollo'
-import { PASSWORD_LIST, PASSWORD_CREATE, PASSWORD_UPDATE } from '@/graphql/password'
+import { PASSWORD_LIST, PASSWORD_CREATE, PASSWORD_UPDATE, PASSWORD_DELETE } from '@/graphql/password'
+
+export enum PasswordFormat {
+  INT = 'int',
+  EN = 'en',
+  MIX = 'mix',
+  MIX_EXCL = 'mixExcl',
+  MIX_LOWER = 'mixLower',
+  MIX_UPPER = 'mixUpper'
+}
 
 export interface PasswordQueryResult {
   passwords: {
@@ -156,6 +165,21 @@ export const usePasswordStore = defineStore('password', () => {
     }
   }
 
+  // Delete all selected passwords
+  async function batchDeletePasswords(passwordIds: number[]) {
+    try {
+      await apolloProvider.defaultClient.mutate({
+        mutation: PASSWORD_DELETE,
+        variables: {
+          ids: passwordIds,
+        }
+      })
+    } catch (e) {
+      state.error = e instanceof Error ? e.message : String(e)
+      throw e
+    }
+  }
+
   function reset() {
     state.uuid = null
     state.initialValues = { number: 0, length: 0, format: '' }
@@ -171,6 +195,7 @@ export const usePasswordStore = defineStore('password', () => {
     create,
     updateStatus,
     batchUpdateStatus,
+    batchDeletePasswords,
     reset
   }
 })

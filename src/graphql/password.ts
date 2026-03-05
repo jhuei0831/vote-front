@@ -1,5 +1,11 @@
 import gql from "graphql-tag";
 
+export const PASSWORD_DECRYPT = gql`
+  query DecryptPassword($password: String!) {
+    decryptPassword(password: $password)
+  }
+`;
+
 export const PASSWORD_LIST = gql`
   query Passwords($input: PasswordQuery!) {
     passwords(input: $input) {

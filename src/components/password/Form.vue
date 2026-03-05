@@ -76,13 +76,14 @@ import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { computed } from 'vue'
+import { PasswordFormat } from '@/stores/password'
 
 interface PasswordFormProps {
   visible: boolean
   initialValues: {
     number: number
     length: number
-    format: string
+    format: PasswordFormat
   }
   submitting?: boolean
   resolver: (e: FormResolverOptions) => Record<string, any> | Promise<Record<string, any>> | undefined
@@ -93,12 +94,12 @@ const props = defineProps<PasswordFormProps>()
 const emit = defineEmits(['submit', 'update:visible'])
 
 const formatOptions = [
-  { label: 'Integer Only', value: 'int' },
-  { label: 'English Only', value: 'en' },
-  { label: 'Mix (Letters + Numbers)', value: 'mix' },
-  { label: 'Mix Exclude Similar (Excl. 0,O,l,1)', value: 'mixExcl' },
-  { label: 'Mix Lowercase', value: 'mixLower' },
-  { label: 'Mix Uppercase', value: 'mixUpper' }
+  { label: 'Integer Only', value: PasswordFormat.INT },
+  { label: 'English Only', value: PasswordFormat.EN },
+  { label: 'Mix (Letters + Numbers)', value: PasswordFormat.MIX },
+  { label: 'Mix Exclude Similar (Excl. 0,O,l,1)', value: PasswordFormat.MIX_EXCL },
+  { label: 'Mix Lowercase', value: PasswordFormat.MIX_LOWER },
+  { label: 'Mix Uppercase', value: PasswordFormat.MIX_UPPER }
 ]
 
 const visible = computed({

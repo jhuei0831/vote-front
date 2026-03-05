@@ -7,6 +7,7 @@ import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
 import BlockUI from 'primevue/blockui';
 import ProgressSpinner from 'primevue/progressspinner';
+import ConfirmationService from 'primevue/confirmationservice';
 import Aura from '@primeuix/themes/aura';
 import '@/style.css'
 import App from '@/App.vue'
@@ -26,6 +27,7 @@ app.use(PrimeVue, {
     },
 })
 app.use(ToastService);
+app.use(ConfirmationService);
 app.component('Toast', Toast);
 app.component('BlockUI', BlockUI);
 app.component('ProgressSpinner', ProgressSpinner);
