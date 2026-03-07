@@ -1,14 +1,14 @@
 <template>
   <div class="card">
     <Message v-if="state.error" severity="error" :closable="false">
-      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error.message }}
+      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error?.message }}
     </Message>
 
     <div v-if="state.loadingInitial" class="p-mb-3">Loading...</div>
     <Form
       v-if="!state.loadingInitial"
       :key="state.uuid || 'create'"
-      :uuid="state.uuid ?? 'null'"
+      :uuid="state.uuid"
       :initialValues="state.initialValues"
       :resolver="resolver"
       :submitting="state.submitting"
@@ -18,21 +18,19 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { onBeforeUnmount, onMounted, watch } from 'vue';
-
-import { storeToRefs } from 'pinia';
-import Message from 'primevue/message';
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast';
-import { useRoute } from 'vue-router';
+import { usePollStore } from '@/stores/poll'
 import { z } from 'zod';
-
-import Form from '@/components/candidate/Form.vue';
-import { CandidateState, useCandidateStore } from '@/stores/candidate';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
+import Form from '@/components/poll/Form.vue'
+import Message from 'primevue/message'
 
 const route = useRoute()
-const store = useCandidateStore()
+const store = usePollStore()
 const toast = useToast();
 
 const props = defineProps(['uuid', 'id']);
@@ -52,18 +50,18 @@ onBeforeUnmount(() => {
 
 const { state } = storeToRefs(store)
 
-const resolver = zodResolver(
+const resolver = ref(zodResolver(
   z.object({
-    questionId: z.number().min(1, { message: 'Question is required.' }),
-    name: z.string().min(1, { message: 'Name is required.' }),
+    title: z.string().min(1, 'Title is required.'),
+    description: z.string().optional()
   })
-);
+));
 
-async function handleSubmit({ valid, values }: { valid: boolean; values: CandidateState['initialValues'] }) {
+async function handleSubmit({ valid, values }) {
   try {
     console.log('Form submission:', { valid, values });
-    console.log('Store initialValues:', state.value.initialValues);
-    console.log('Is edit mode:', state.value.isEdit);
+    console.log('Store initialValues:', state.initialValues);
+    console.log('Is edit mode:', state.isEdit);
     
     if (!valid) {
       console.log('Form validation failed');
@@ -71,20 +69,20 @@ async function handleSubmit({ valid, values }: { valid: boolean; values: Candida
     }
     
     await store.submit(values)
-    // Show success toast after successful submission
+    // 成功後提示
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: state.value.isEdit ? 'Candidate updated successfully' : 'Candidate created successfully', 
+      detail: 'Poll updated successfully', 
       life: 3000
     });
   } catch (e) {
-    // Errors are already in state.error, but you can add a toast if needed
+    // 錯誤已在 state.error，可視需要加 toast
     console.error('Submit error:', e)
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: state.value.isEdit ? 'Error updating candidate' : 'Error creating candidate', 
+      detail: e.message || 'Error updating poll', 
       life: 3000
     });
   }

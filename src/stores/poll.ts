@@ -2,15 +2,15 @@ import { ref, reactive, computed } from "vue";
 import { defineStore } from "pinia";
 import { apolloProvider } from "@/api/apollo";
 import { 
-  QUESTION_VIEW, 
-  QUESTION_LIST, 
-  QUESTION_CREATE, 
-  QUESTION_UPDATE,
-  QUESTION_OPTIONS 
-} from "@/graphql/question";
+  POLL_VIEW, 
+  POLL_LIST, 
+  POLL_CREATE, 
+  POLL_UPDATE,
+  POLL_SELECT_LIST 
+} from "@/graphql/poll";
 
-export interface QuestionQueryResult {
-  questions: {
+export interface PollQueryResult {
+  polls: {
     edges: {
       node: {
         id: number;
@@ -24,7 +24,7 @@ export interface QuestionQueryResult {
   }[];
 }
 
-export interface QuestionState {
+export interface PollState {
   uuid: string | null;
   id: number | null;
   isEdit: boolean;
@@ -38,10 +38,10 @@ export interface QuestionState {
   error: any;
 }
 
-export const useQuestionStore = defineStore("question", () => {
+export const usePollStore = defineStore("poll", () => {
   // State
-  const questions = ref<QuestionState['initialValues'][]>([]);
-  const state = reactive<QuestionState>({
+  const polls = ref<PollState['initialValues'][]>([]);
+  const state = reactive<PollState>({
     uuid: null,
     id: null,
     isEdit: false,
@@ -55,23 +55,23 @@ export const useQuestionStore = defineStore("question", () => {
   });
 
   // Getters
-  const questionOptions = computed(() => {
-    return questions.value.map((question: QuestionState['initialValues']) => ({
-      label: question.title,
-      value: question.id
+  const pollOptions = computed(() => {
+    return polls.value.map((poll: PollState['initialValues']) => ({
+      label: poll.title,
+      value: poll.id
     }));
   });
 
-  const questionMap = computed(() => {
+  const pollMap = computed(() => {
     return new Map(
-      questions.value.map(q => [q.id, q.title])
+      polls.value.map(q => [q.id, q.title])
     );
   });
 
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'))
 
   // Actions
-  async function init(uuid: QuestionState['uuid'], id: QuestionState['id']) {
+  async function init(uuid: PollState['uuid'], id: PollState['id']) {
     // Initialize: set mode & load initial values (only in edit mode)
     state.uuid = uuid ?? null
     state.id = id ?? null
@@ -89,15 +89,15 @@ export const useQuestionStore = defineStore("question", () => {
     
     try {
       const { data } = await apolloProvider.defaultClient.query({
-        query: QUESTION_VIEW,
+        query: POLL_VIEW,
         variables: {
           id,
-          withCandidates: false
+          withPollOptions: false
         },
         fetchPolicy: 'network-only',
       })
       
-      const v = data?.question
+      const v = data?.poll
       
       state.initialValues = v
         ? { 
@@ -115,71 +115,71 @@ export const useQuestionStore = defineStore("question", () => {
     }
   }
 
-  async function submit(values: QuestionState['initialValues']) {
+  async function submit(values: PollState['initialValues']) {
     state.submitting = true
     state.error = null
     try {
       if (!state.isEdit) {
         // Create
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: QUESTION_CREATE,
+          mutation: POLL_CREATE,
           variables: { 
             input: {
-              voteId: state.uuid,
+              sessionId: state.uuid,
               title: values.title,
               description: values.description,
             }
           },
           refetchQueries: [
             {
-              query: QUESTION_LIST,
+              query: POLL_LIST,
               variables: {
-                questionQuery: {
-                  voteId: state.uuid,
+                input: {
+                  sessionId: state.uuid,
                   first: 999
                 },
-                withCandidates: false  
+                withPollOptions: false  
               }
             }
           ]
         })
-        return res.data?.createQuestion
+        return res.data?.createPoll
       } else {
         // Update
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: QUESTION_UPDATE,
+          mutation: POLL_UPDATE,
           variables: { 
             id: state.id,
             input: {
-              voteId: state.uuid,
+              sessionId: state.uuid,
               title: values.title,
               description: values.description,
             }
           },
           refetchQueries: [
             { 
-              query: QUESTION_LIST, 
+              query: POLL_LIST, 
               variables: {
-                questionQuery: {
-                  voteId: state.uuid,
+                input: {
+                  sessionId: state.uuid,
                   first: 999
                 },
-                withCandidates: false  
+                withPollOptions: false  
               }
             },
             { 
-              query: QUESTION_VIEW, 
+              query: POLL_VIEW, 
               variables: { 
                 id: state.id,
-                withCandidates: false
+                withPollOptions: false
               } 
             },
           ],
           optimisticResponse: {
-            updateQuestion: { 
-              __typename: 'Question',
+            updatePoll: { 
+              __typename: 'Poll',
               id: state.id, 
-              voteId: state.uuid,
+              sessionId: state.uuid,
               title: values.title, 
               description: values.description,
               createdAt: '',
@@ -187,7 +187,7 @@ export const useQuestionStore = defineStore("question", () => {
             },
           }
         })
-        return res.data?.updateQuestion
+        return res.data?.updatePoll
       }
     } catch (e) {
       state.error = e
@@ -207,58 +207,58 @@ export const useQuestionStore = defineStore("question", () => {
     state.error = null
   }
 
-  async function fetchQuestion(id: QuestionState['id']) {
+  async function fetchPoll(id: PollState['id']) {
     if (!id) return;
         
     try {
       const result = await apolloProvider.defaultClient.query({
-        query: QUESTION_VIEW,
+        query: POLL_VIEW,
         variables: {
           id,
-          withCandidates: false
+          withPollOptions: false
         }
       });
       
-      return result.data?.question;
+      return result.data?.poll;
     } catch (error) {
-      console.error('Error fetching question:', error);
+      console.error('Error fetching poll:', error);
       throw error;
     } finally {
     }
   }
 
-  async function fetchQuestionOptions(uuid: QuestionState['uuid']) {
+  async function fetchPollList(uuid: PollState['uuid']) {
     if (!uuid) return;
         
     try {
       const result = await apolloProvider.defaultClient.query({
-        query: QUESTION_OPTIONS,
+        query: POLL_SELECT_LIST,
         variables: {
-          voteId: uuid,
+          sessionId: uuid,
         },
         fetchPolicy: 'network-only',
       });
       
-      questions.value = result.data?.questionOptions?.options;
+      polls.value = result.data?.pollList?.list;
     } catch (error) {
-      console.error('Error fetching questions:', error);
+      console.error('Error fetching poll list:', error);
       throw error;
     }
   }
 
   return {
     // state
-    questions,
+    polls,
     state,
     // getters
     modeLabel,
-    questionOptions,
-    questionMap,
+    pollOptions,
+    pollMap,
     // actions
     init,
     submit,
     reset,
-    fetchQuestion,
-    fetchQuestionOptions,
+    fetchPoll,
+    fetchPollList,
   };
 });

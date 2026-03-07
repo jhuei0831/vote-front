@@ -1,32 +1,32 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Passwords</h1>
+    <h1 class="text-3xl font-bold mb-6">Invitations</h1>
     <div class="flex gap-2 mb-4">
       <Button 
-        label="Create New Password" 
+        label="Create New Invitation" 
         icon="pi pi-plus" 
         @click="openCreateDialog"
       />
       <Button 
-        v-if="selectedPasswords.length > 0"
+        v-if="selectedInvitations.length > 0"
         label="Activate Selected" 
         icon="pi pi-check" 
         severity="success"
         @click="batchUpdateStatus(true)"
       />
       <Button 
-        v-if="selectedPasswords.length > 0"
+        v-if="selectedInvitations.length > 0"
         label="Deactivate Selected" 
         icon="pi pi-times" 
         severity="warning"
         @click="batchUpdateStatus(false)"
       />
       <Button 
-        v-if="selectedPasswords.length > 0"
+        v-if="selectedInvitations.length > 0"
         label="Delete Selected" 
         icon="pi pi-trash" 
         severity="danger"
-        @click="confirmBatchDeletePasswords()"
+        @click="confirmBatchDeleteInvitations()"
       />
     </div>
     
@@ -41,10 +41,10 @@
     </div>
 
     <!-- Result -->
-    <div v-else-if="passwords && passwords.length > 0" class="result apollo">
+    <div v-else-if="invitations && invitations.length > 0" class="result apollo">
       <DataTable 
-        v-model:selection="selectedPasswords"
-        :value="passwords" 
+        v-model:selection="selectedInvitations"
+        :value="invitations" 
         striped-rows
         scrollable
         scroll-height="flex"
@@ -57,20 +57,20 @@
       >
         <Column selection-mode="multiple" header-style="width: 3rem" :exportable="false"></Column>
         <Column field="id" header="ID" :sortable="true"></Column>
-        <Column field="password" header="Password" :sortable="true">
+        <Column field="invitation" header="Invitation" :sortable="true">
           <template #body="slotProps">
             <div class="flex items-center gap-2">
               <Button
-                :icon="decryptedPasswords.has(slotProps.data.id) ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                :icon="decryptedInvitations.has(slotProps.data.id) ? 'pi pi-eye-slash' : 'pi pi-eye'"
                 text
                 rounded
                 size="small"
                 severity="secondary"
-                @click="togglePasswordVisibility(slotProps.data)"
+                @click="toggleInvitationVisibility(slotProps.data)"
                 class="hover:bg-gray-100"
               />
               <span class="font-mono">
-                {{ decryptedPasswords.has(slotProps.data.id) ? decryptedPasswords.get(slotProps.data.id) : slotProps.data.password }}
+                {{ decryptedInvitations.has(slotProps.data.id) ? decryptedInvitations.get(slotProps.data.id) : slotProps.data.codeHash }}
               </span>
             </div>
           </template>
@@ -94,7 +94,7 @@
         <Column :exportable="false">
           <template #body="slotProps">
             <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-              @click="confirmDeletePassword(slotProps.data)" />
+              @click="confirmDeleteInvitation(slotProps.data)" />
           </template>
         </Column>
       </DataTable>
@@ -102,28 +102,28 @@
 
     <!-- No result -->
     <div v-else class="p-6 text-center text-gray-500">
-      <div class="text-lg">No passwords found</div>
+      <div class="text-lg">No invitations found</div>
     </div>
 
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog></ConfirmDialog>
-    <Dialog v-model:visible="deletePasswordDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deleteInvitationDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="password">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
+        <span v-if="invitation">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deletePasswordDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deleteInvitationDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deletePassword" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deleteInvitation" severity="danger" />
       </template>
     </Dialog>
 
-    <!-- Create Password Dialog -->
-    <PasswordForm
+    <!-- Create Invitation Dialog -->
+    <InvitationForm
       v-model:visible="createDialogVisible"
       :initialValues="initialValues"
-      :submitting="passwordStore.state.submitting"
+      :submitting="invitationStore.state.submitting"
       :resolver="resolver"
       @submit="handleSubmit"
     />
@@ -144,29 +144,29 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 
 import { useEntityList } from '@/composables/useEntityList'
 import { useEntityDelete } from '@/composables/useEntityDelete'
-import { PASSWORD_LIST, PASSWORD_DELETE, PASSWORD_DECRYPT } from '@/graphql/password'
-import { PasswordFormat, PasswordQueryResult, PasswordState, usePasswordStore } from '@/stores/password'
+import { INVITATION_LIST, INVITATION_DELETE, INVITATION_DECRYPT } from '@/graphql/invitation'
+import { InvitationFormat, InvitationQueryResult, InvitationState, useInvitationStore } from '@/stores/invitation'
 import { apolloProvider } from '@/api/apollo'
 import { formatDate } from '@/utils/date'
-import PasswordForm from '@/components/password/Form.vue'
+import InvitationForm from '@/components/invitation/Form.vue'
 
 const props = defineProps(['uuid'])
 const toast = useToast()
 const confirm = useConfirm()
-const passwordStore = usePasswordStore()
+const invitationStore = useInvitationStore()
 
 // Selection state
-const selectedPasswords = ref<any[]>([])
+const selectedInvitations = ref<any[]>([])
 
-// Decrypted passwords cache
-const decryptedPasswords = ref<Map<number, string>>(new Map())
+// Decrypted invitations cache
+const decryptedInvitations = ref<Map<number, string>>(new Map())
 
 // Create dialog state
 const createDialogVisible = ref(false)
 const initialValues = ref({
   number: 1,
   length: 6,
-  format: PasswordFormat.MIX
+  format: InvitationFormat.MIX
 })
 
 // Form resolver
@@ -175,12 +175,12 @@ const resolver = ref(zodResolver(
     number: z.number().min(1, 'Number must be at least 1'),
     length: z.number().min(4, 'Length must be at least 4').max(32, 'Length must be at most 32'),
     format: z.enum([
-      PasswordFormat.INT, 
-      PasswordFormat.EN, 
-      PasswordFormat.MIX, 
-      PasswordFormat.MIX_EXCL, 
-      PasswordFormat.MIX_LOWER, 
-      PasswordFormat.MIX_UPPER
+      InvitationFormat.INT, 
+      InvitationFormat.EN, 
+      InvitationFormat.MIX, 
+      InvitationFormat.MIX_EXCL, 
+      InvitationFormat.MIX_LOWER, 
+      InvitationFormat.MIX_UPPER
     ], {
       message: 'Please select a format'
     })
@@ -192,21 +192,21 @@ function openCreateDialog() {
   initialValues.value = {
     number: 1,
     length: 6,
-    format: PasswordFormat.MIX
+    format: InvitationFormat.MIX
   }
 }
 
-// Handle form submission for creating new passwords
+// Handle form submission for creating new invitations
 async function handleSubmit({ valid, values }: { valid: boolean; values: any }) {
   if (!valid) return
   
   try {
-    await passwordStore.create(props.uuid, values)
+    await invitationStore.create(props.uuid, values)
     
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: 'Password created successfully',
+      detail: 'Invitation created successfully',
       life: 3000
     })
     
@@ -217,22 +217,22 @@ async function handleSubmit({ valid, values }: { valid: boolean; values: any }) 
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: e instanceof Error ? e.message : 'Error creating password',
+      detail: e instanceof Error ? e.message : 'Error creating invitation',
       life: 3000
     })
   }
 }
 
-// Toggle password status (active/inactive)
-async function toggleStatus(password: any) {
+// Toggle invitation status (active/inactive)
+async function toggleStatus(invitation: any) {
   try {
-    const newStatus = !password.status
-    await passwordStore.updateStatus(password.id, props.uuid, newStatus)
+    const newStatus = !invitation.status
+    await invitationStore.updateStatus(invitation.id, props.uuid, newStatus)
     
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: `Password ${newStatus ? 'activated' : 'deactivated'} successfully`,
+      detail: `Invitation ${newStatus ? 'activated' : 'deactivated'} successfully`,
       life: 3000
     })
     
@@ -242,89 +242,89 @@ async function toggleStatus(password: any) {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: e instanceof Error ? e.message : 'Error updating password status',
+      detail: e instanceof Error ? e.message : 'Error updating invitation status',
       life: 3000
     })
   }
 }
 
-// Toggle password visibility (decrypt/encrypt)
-async function togglePasswordVisibility(password: any) {
+// Toggle invitation visibility (decrypt/encrypt)
+async function toggleInvitationVisibility(invitation: any) {
   try {
     // If already decrypted, hide it
-    if (decryptedPasswords.value.has(password.id)) {
-      decryptedPasswords.value.delete(password.id)
+    if (decryptedInvitations.value.has(invitation.id)) {
+      decryptedInvitations.value.delete(invitation.id)
       return
     }
     
     // Otherwise, decrypt it
     const result = await apolloProvider.defaultClient.query({
-      query: PASSWORD_DECRYPT,
+      query: INVITATION_DECRYPT,
       variables: {
-        password: password.password
+        codeHash: invitation.codeHash
       }
     })
     
-    const decrypted = result.data?.decryptPassword
+    const decrypted = result.data?.decryptInvitation
     if (decrypted) {
-      decryptedPasswords.value.set(password.id, decrypted)
+      decryptedInvitations.value.set(invitation.id, decrypted)
     }
   } catch (e) {
     console.error('Decrypt error:', e)
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: e instanceof Error ? e.message : 'Error decrypting password',
+      detail: e instanceof Error ? e.message : 'Error decrypting invitation',
       life: 3000
     })
   }
 }
 
-// Batch update status for selected passwords
+// Batch update status for selected invitations
 async function batchUpdateStatus(status: boolean) {
-  if (selectedPasswords.value.length === 0) return
+  if (selectedInvitations.value.length === 0) return
   
   try {
-    const ids = selectedPasswords.value.map((p: any) => p.id)
-    await passwordStore.batchUpdateStatus(ids, props.uuid, status)
+    const ids = selectedInvitations.value.map((p: any) => p.id)
+    await invitationStore.batchUpdateStatus(ids, props.uuid, status)
     
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: `${selectedPasswords.value.length} password(s) ${status ? 'activated' : 'deactivated'} successfully`,
+      detail: `${selectedInvitations.value.length} invitation(s) ${status ? 'activated' : 'deactivated'} successfully`,
       life: 3000
     })
     
-    selectedPasswords.value = []
+    selectedInvitations.value = []
     await refetch()
   } catch (e) {
     console.error('Batch update error:', e)
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: e instanceof Error ? e.message : 'Error updating passwords',
+      detail: e instanceof Error ? e.message : 'Error updating invitations',
       life: 3000
     })
   }
 }
 
-const { loading, error, refetch, items: passwords, totalCount } = useEntityList<PasswordQueryResult, any>({
-  query: PASSWORD_LIST,
+const { loading, error, refetch, items: invitations, totalCount } = useEntityList<InvitationQueryResult, any>({
+  query: INVITATION_LIST,
   variables: {
     input: {
-      voteId: props.uuid,
+      sessionId: props.uuid,
       first: 999
     },
-    withQuestions: false
+    withPolls: false
   },
-  extractEdges: (result) => result?.passwords?.[0]?.edges,
-  getTotalCount: (result) => result?.passwords?.[0]?.totalCount ?? 0
+  extractEdges: (result) => result?.invitations?.[0]?.edges,
+  getTotalCount: (result) => result?.invitations?.[0]?.totalCount ?? 0
 })
 
-const confirmBatchDeletePasswords = () => {
-  if (selectedPasswords.value.length === 0) return
+const confirmBatchDeleteInvitations = () => {
+  if (selectedInvitations.value.length === 0) return
   confirm.require({
-    message: 'Are you sure you want to delete the selected passwords?',
+    message: 'Are you sure you want to delete the selected invitations?',
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
     rejectProps: {
@@ -337,16 +337,16 @@ const confirmBatchDeletePasswords = () => {
       severity: 'danger'
     },
     accept: async () => {
-      const ids = selectedPasswords.value.map((p: any) => p.id)
-      await passwordStore.batchDeletePasswords(ids)
+      const ids = selectedInvitations.value.map((p: any) => p.id)
+      await invitationStore.batchDeleteInvitations(ids)
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: `${selectedPasswords.value.length} password(s) deleted successfully`,
+        detail: `${selectedInvitations.value.length} invitation(s) deleted successfully`,
         life: 3000
       })
       
-      selectedPasswords.value = []
+      selectedInvitations.value = []
       await refetch()
     },
     reject: () => {
@@ -356,16 +356,16 @@ const confirmBatchDeletePasswords = () => {
 }
 
 const {
-  deleteDialog: deletePasswordDialog,
-  entity: password,
-  confirmDelete: confirmDeletePassword,
-  executeDelete: deletePassword,
+  deleteDialog: deleteInvitationDialog,
+  entity: invitation,
+  confirmDelete: confirmDeleteInvitation,
+  executeDelete: deleteInvitation,
   getDisplayName
-} = useEntityDelete<PasswordState['initialValues']>({
-  mutation: PASSWORD_DELETE,
-  entityName: 'Password',
-  getDisplayName: (password) => password.password ?? 'this password',
-  getDeleteVariables: (password) => ({ ids: [password.id] }),
+} = useEntityDelete<InvitationState['initialValues']>({
+  mutation: INVITATION_DELETE,
+  entityName: 'Invitation',
+  getDisplayName: (invitation) => invitation.codeHash ?? 'this invitation',
+  getDeleteVariables: (invitation) => ({ ids: [invitation.id] }),
   onSuccess: async () => { await refetch() }
 })
 </script>

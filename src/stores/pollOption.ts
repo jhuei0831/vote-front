@@ -1,19 +1,19 @@
 import { defineStore } from "pinia";
 import { apolloProvider } from "@/api/apollo";
 import { 
-  CANDIDATE_VIEW,
-  CANDIDATE_LIST,
-  CANDIDATE_CREATE, 
-  CANDIDATE_UPDATE
-} from "@/graphql/candidate";
+  POLL_OPTION_VIEW,
+  POLL_OPTION_LIST,
+  POLL_OPTION_CREATE, 
+  POLL_OPTION_UPDATE
+} from "@/graphql/pollOption";
 import { computed, reactive } from "vue";
 
-export interface CandidateQueryResult {
-  candidates: {
+export interface PollOptionQueryResult {
+  pollOptions: {
     edges: {
       node: {
         id: number;
-        questionId: number;
+        pollId: number;
         name: string;
         createdAt: string;
         updatedAt: string;
@@ -23,13 +23,13 @@ export interface CandidateQueryResult {
   }[];
 }
 
-export interface CandidateState {
+export interface PollOptionState {
   uuid: string | null;
   id: number | null;
   isEdit: boolean;
   initialValues: {
     id?: number;
-    questionId: number;
+    pollId: number;
     name: string;
   };
   loadingInitial: boolean;
@@ -37,14 +37,14 @@ export interface CandidateState {
   error: any;
 }
 
-export const useCandidateStore = defineStore("candidate", () => {
+export const usePollOptionStore = defineStore("pollOption", () => {
   // State
-  const state = reactive<CandidateState>({
+  const state = reactive<PollOptionState>({
     uuid: null,
     id: null,
     isEdit: false,
     initialValues: {
-      questionId: 0,
+      pollId: 0,
       name: ''
     },
     loadingInitial: false,
@@ -56,7 +56,7 @@ export const useCandidateStore = defineStore("candidate", () => {
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'));
 
   // Actions
-  async function init(uuid: CandidateState['uuid'], id: CandidateState['id']) {
+  async function init(uuid: PollOptionState['uuid'], id: PollOptionState['id']) {
     
     // Initialize: set mode & load initial values (only in edit mode)
     state.uuid = uuid ?? null
@@ -66,7 +66,7 @@ export const useCandidateStore = defineStore("candidate", () => {
 
     if (!state.isEdit) {
       console.log('Create mode - setting empty initial values');
-      state.initialValues = { questionId: 0, name: ''}
+      state.initialValues = { pollId: 0, name: ''}
       return
     }
 
@@ -75,21 +75,21 @@ export const useCandidateStore = defineStore("candidate", () => {
     
     try {
       const { data } = await apolloProvider.defaultClient.query({
-        query: CANDIDATE_VIEW,
+        query: POLL_OPTION_VIEW,
         variables: {
           id
         },
         fetchPolicy: 'network-only',
       })
       
-      const v = data?.candidate
+      const v = data?.pollOption
       
       state.initialValues = v
         ? { 
-            questionId: v.questionId, 
+            pollId: v.pollId, 
             name: v.name
           }
-        : { questionId: 0, name: '' }
+        : { pollId: 0, name: '' }
         
       console.log('Final initialValues:', state.initialValues);
     } catch (e) {
@@ -100,7 +100,7 @@ export const useCandidateStore = defineStore("candidate", () => {
     }
   }
 
-  async function submit(values: CandidateState['initialValues']) {
+  async function submit(values: PollOptionState['initialValues']) {
     state.submitting = true
     state.error = null
     
@@ -108,68 +108,68 @@ export const useCandidateStore = defineStore("candidate", () => {
       if (!state.isEdit) {
         // Create
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: CANDIDATE_CREATE,
+          mutation: POLL_OPTION_CREATE,
           variables: { 
             input: {
-              questionId: values.questionId,
+              pollId: values.pollId,
               name: values.name,
             }
           },
           refetchQueries: [
             {
-              query: CANDIDATE_LIST,
+              query: POLL_OPTION_LIST,
               variables: {
-                query: {
-                  voteId: state.uuid,
+                input: {
+                  sessionId: state.uuid,
                   first: 999
                 },
               }
             }
           ]
         })
-        return res.data?.createCandidate
+        return res.data?.createPollOption
       } else {
         // Update
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: CANDIDATE_UPDATE,
+          mutation: POLL_OPTION_UPDATE,
           variables: { 
             id: state.id,
             input: {
-              questionId: values.questionId,
+              pollId: values.pollId,
               name: values.name,
             }
           },
           refetchQueries: [
             { 
-              query: CANDIDATE_LIST, 
+              query: POLL_OPTION_LIST, 
               variables: {
-                query: {
-                  voteId: state.uuid,
+                input: {
+                  sessionId: state.uuid,
                   first: 999
                 },
-                withCandidates: false  
+                withPollOptions: false  
               }
             },
             { 
-              query: CANDIDATE_VIEW, 
+              query: POLL_OPTION_VIEW, 
               variables: { 
                 id: state.id,
-                withCandidates: false
+                withPollOptions: false
               } 
             },
           ],
           optimisticResponse: {
-            updateCandidate: { 
-              __typename: 'Candidate',
+            updatePollOption: { 
+              __typename: 'PollOption',
               id: state.id, 
-              questionId: values.questionId,
+              pollId: values.pollId,
               name: values.name,
               createdAt: '',
               updatedAt: '',
             },
           }
         })
-        return res.data?.updateCandidate
+        return res.data?.updatePollOption
       }
     } catch (e) {
       state.error = e
@@ -183,13 +183,13 @@ export const useCandidateStore = defineStore("candidate", () => {
     state.uuid = null
     state.id = null
     state.isEdit = false
-    state.initialValues = { questionId: 0, name: '' }
+    state.initialValues = { pollId: 0, name: '' }
     state.loadingInitial = false
     state.submitting = false
     state.error = null
   }
 
-  async function fetchCandidate(id: CandidateState['id']) {
+  async function fetchPollOption(id: PollOptionState['id']) {
     if (!id) {
       console.error('id must defined');
       return;
@@ -197,15 +197,15 @@ export const useCandidateStore = defineStore("candidate", () => {
         
     try {
       const result = await apolloProvider.defaultClient.query({
-        query: CANDIDATE_VIEW,
+        query: POLL_OPTION_VIEW,
         variables: {
           id
         }
       });
       
-      return result.data?.candidate;
+      return result.data?.pollOption;
     } catch (error) {
-      console.error('Error fetching candidate:', error);
+      console.error('Error fetching pollOption:', error);
       throw error;
     } 
   }
@@ -219,6 +219,6 @@ export const useCandidateStore = defineStore("candidate", () => {
     init,
     submit,
     reset,
-    fetchCandidate,
+    fetchPollOption,
   }
 });

@@ -2,12 +2,12 @@
   <Dialog 
     v-model:visible="visible" 
     :style="{ width: '600px' }" 
-    header="Create New Password" 
+    header="Create New Invitation" 
     :modal="true"
     @update:visible="handleClose"
   >
     <Form v-slot="$form" :initialValues :resolver @submit="onSubmit" class="flex flex-col gap-4 w-full">
-      <span class="text-surface-500 dark:text-surface-400 block mb-4">Enter password generation settings.</span>
+      <span class="text-surface-500 dark:text-surface-400 block mb-4">Enter invitation generation settings.</span>
       
       <div class="mb-4">
         <div class="flex items-center gap-4 mb-1">
@@ -76,30 +76,30 @@ import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { computed } from 'vue'
-import { PasswordFormat } from '@/stores/password'
+import { InvitationFormat } from '@/stores/invitation'
 
-interface PasswordFormProps {
+interface InvitationFormProps {
   visible: boolean
   initialValues: {
     number: number
     length: number
-    format: PasswordFormat
+    format: InvitationFormat
   }
   submitting?: boolean
   resolver: (e: FormResolverOptions) => Record<string, any> | Promise<Record<string, any>> | undefined
 }
 
-const props = defineProps<PasswordFormProps>()
+const props = defineProps<InvitationFormProps>()
 
 const emit = defineEmits(['submit', 'update:visible'])
 
 const formatOptions = [
-  { label: 'Integer Only', value: PasswordFormat.INT },
-  { label: 'English Only', value: PasswordFormat.EN },
-  { label: 'Mix (Letters + Numbers)', value: PasswordFormat.MIX },
-  { label: 'Mix Exclude Similar (Excl. 0,O,l,1)', value: PasswordFormat.MIX_EXCL },
-  { label: 'Mix Lowercase', value: PasswordFormat.MIX_LOWER },
-  { label: 'Mix Uppercase', value: PasswordFormat.MIX_UPPER }
+  { label: 'Integer Only', value: InvitationFormat.INT },
+  { label: 'English Only', value: InvitationFormat.EN },
+  { label: 'Mix (Letters + Numbers)', value: InvitationFormat.MIX },
+  { label: 'Mix Exclude Similar (Excl. 0,O,l,1)', value: InvitationFormat.MIX_EXCL },
+  { label: 'Mix Lowercase', value: InvitationFormat.MIX_LOWER },
+  { label: 'Mix Uppercase', value: InvitationFormat.MIX_UPPER }
 ]
 
 const visible = computed({

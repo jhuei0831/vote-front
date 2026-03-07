@@ -1,11 +1,11 @@
 import { createWebHistory, createRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useQuestionStore } from '@/stores/question'
+import { usePollStore } from '@/stores/poll'
 
-// candidate route guard to fetch questions before entering
-const candidateBeforeEnter = async (to: any) => {
-  const questionStore = useQuestionStore();
-  await questionStore.fetchQuestionOptions(to.params.uuid);
+// poll-option route guard to fetch poll options before entering
+const pollOptionBeforeEnter = async (to: any) => {
+  const pollStore = usePollStore();
+  await pollStore.fetchPollList(to.params.uuid);
 }
 
 const routes = [
@@ -28,40 +28,39 @@ const routes = [
         component: () => import('@/views/manage/Dashboard.vue') 
       },
       { 
-        path: 'vote',
-        name: 'VoteIndex',
-        component: () => import('@/views/manage/vote/Index.vue') 
+        path: 'session',
+        component: () => import('@/views/manage/session/Index.vue') 
       },
       { 
-        path: 'vote/upsert/:uuid?', 
-        component: () => import('@/views/manage/vote/Upsert.vue'), 
+        path: 'session/upsert/:uuid?', 
+        component: () => import('@/views/manage/session/Upsert.vue'), 
         props: true 
       },
       { 
-        path: 'question/:uuid', 
-        component: () => import('@/views/manage/question/Index.vue'), 
+        path: 'poll/:uuid', 
+        component: () => import('@/views/manage/poll/Index.vue'), 
         props: true 
       },
       { 
-        path: 'question/:uuid/upsert/:id?', 
-        component: () => import('@/views/manage/question/Upsert.vue'), 
+        path: 'poll/:uuid/upsert/:id?', 
+        component: () => import('@/views/manage/poll/Upsert.vue'), 
         props: true 
       },
       { 
-        path: 'candidate/:uuid', 
-        component: () => import('@/views/manage/candidate/Index.vue'), 
+        path: 'poll-option/:uuid', 
+        component: () => import('@/views/manage/pollOption/Index.vue'), 
         props: true,
-        beforeEnter: candidateBeforeEnter,
+        beforeEnter: pollOptionBeforeEnter,
       },
       { 
-        path: 'candidate/:uuid/upsert/:id?', 
-        component: () => import('@/views/manage/candidate/Upsert.vue'), 
+        path: 'poll-option/:uuid/upsert/:id?', 
+        component: () => import('@/views/manage/pollOption/Upsert.vue'), 
         props: true,
-        beforeEnter: candidateBeforeEnter,
+        beforeEnter: pollOptionBeforeEnter,
       },
       {
-        path: 'password/:uuid',
-        component: () => import('@/views/manage/password/Index.vue'),
+        path: 'invitation/:uuid',
+        component: () => import('@/views/manage/invitation/Index.vue'),
         props: true,
       }
     ], 
@@ -77,21 +76,21 @@ export const router = createRouter({
   routes,
 })
 
-// 導航守衛：驗證登入狀態
+// Navigation guard: verify authentication state
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
-  // 初始化認證狀態（只在第一次載入時）
+  // Initialize authentication state (only on first load)
   if (!authStore.token && localStorage.getItem('token')) {
     authStore.initAuth()
   }
   
-  // 檢查是否需要登入
+  // Check if authentication is required
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // 未登入，導向登入頁
+    // Not authenticated, redirect to login page
     next('/login')
   } else if (to.path === '/login' && authStore.isAuthenticated) {
-    // 已登入，嘗試訪問登入頁，導向首頁
+    // Already authenticated, trying to access login page, redirect to home
     next('/')
   } else {
     next()

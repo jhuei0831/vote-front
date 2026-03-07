@@ -1,11 +1,11 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Questions</h1>
+    <h1 class="text-3xl font-bold mb-6">Polls</h1>
     <Button 
-      label="Create New Question" 
+      label="Create New Poll" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push(`/manage/question/${uuid}/upsert`)"
+      @click="$router.push(`/manage/poll/${uuid}/upsert`)"
     />
 
     <!-- Loading -->
@@ -19,9 +19,9 @@
     </div>
 
     <!-- Result -->
-    <div v-else-if="questions && questions.length > 0" class="result apollo">
+    <div v-else-if="polls && polls.length > 0" class="result apollo">
       <DataTable 
-        :value="questions" 
+        :value="polls" 
         striped-rows
         scrollable
         scroll-height="flex"
@@ -36,7 +36,7 @@
         <Column field="title" header="Title" :sortable="true">
           <template #body="slotProps">
             <RouterLink 
-              :to="`/manage/question/${uuid}/upsert/${slotProps.data.id}`" 
+              :to="`/manage/poll/${uuid}/upsert/${slotProps.data.id}`" 
               class="text-amber-700 hover:underline"
             >
               {{ slotProps.data.title }}
@@ -57,7 +57,7 @@
         <Column :exportable="false">
           <template #body="slotProps">
             <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-              @click="confirmDeleteQuestion(slotProps.data)" />
+              @click="confirmDeletePoll(slotProps.data)" />
           </template>
         </Column>
       </DataTable>
@@ -65,19 +65,19 @@
 
     <!-- No result -->
     <div v-else class="p-6 text-center text-gray-500">
-      <div class="text-lg">No questions found</div>
+      <div class="text-lg">No polls found</div>
     </div>
     
 
-    <Dialog v-model:visible="deleteQuestionDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deletePollDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="question">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
+        <span v-if="poll">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteQuestionDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deletePollDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteQuestion" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deletePoll" severity="danger" />
       </template>
     </Dialog>
   </div>
@@ -92,36 +92,36 @@ import Dialog from 'primevue/dialog'
 import TableSkeleton from '@/components/widget/TableSkeleton.vue'
 import { useEntityList } from '@/composables/useEntityList'
 import { useEntityDelete } from '@/composables/useEntityDelete'
-import { QUESTION_LIST, QUESTION_DELETE } from '@/graphql/question'
-import { QuestionState, QuestionQueryResult } from '@/stores/question'
+import { POLL_LIST, POLL_DELETE } from '@/graphql/poll'
+import { PollState, PollQueryResult } from '@/stores/poll'
 import { formatDate } from '@/utils/date'
 
 const props = defineProps(['uuid'])
 
-const { loading, error, refetch, items: questions, totalCount } = useEntityList<QuestionQueryResult, any>({
-  query: QUESTION_LIST,
+const { loading, error, refetch, items: polls, totalCount } = useEntityList<PollQueryResult, any>({
+  query: POLL_LIST,
   variables: {
-    questionQuery: {
-      voteId: props.uuid,
+    input: {
+      sessionId: props.uuid,
       first: 999
     },
-    withCandidates: false
+    withPollOptions: false
   },
-  extractEdges: (result) => result?.questions?.[0]?.edges,
-  getTotalCount: (result) => result?.questions?.[0]?.totalCount ?? 0
+  extractEdges: (result) => result?.polls?.[0]?.edges,
+  getTotalCount: (result) => result?.polls?.[0]?.totalCount ?? 0
 })
 
 const {
-  deleteDialog: deleteQuestionDialog,
-  entity: question,
-  confirmDelete: confirmDeleteQuestion,
-  executeDelete: deleteQuestion,
+  deleteDialog: deletePollDialog,
+  entity: poll,
+  confirmDelete: confirmDeletePoll,
+  executeDelete: deletePoll,
   getDisplayName
-} = useEntityDelete<QuestionState['initialValues']>({
-  mutation: QUESTION_DELETE,
-  entityName: 'Question',
-  getDisplayName: (question) => question.title ?? 'this question',
-  getDeleteVariables: (question) => ({ ids: [question.id] }),
+} = useEntityDelete<PollState['initialValues']>({
+  mutation: POLL_DELETE,
+  entityName: 'Poll',
+  getDisplayName: (poll) => poll.title ?? 'this poll',
+  getDeleteVariables: (poll) => ({ ids: [poll.id] }),
   onSuccess: async () => { await refetch() }
 })
 </script>

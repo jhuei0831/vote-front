@@ -1,6 +1,6 @@
 <template>
   <Form v-slot="$form" :initialValues :resolver @submit="onSubmit" class="flex flex-col gap-4 w-full">
-    <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter question information.</span>
+    <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter poll information.</span>
     <div class="mb-4">
       <div class="flex items-center gap-4 mb-1">
         <label for="title" class="font-semibold w-24">Title</label>
@@ -17,7 +17,7 @@
     </div>
 
     <div class="text-center">
-      <RouterLink :to="`/manage/question/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
+      <RouterLink :to="`/manage/poll/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
       <Button type="submit" :loading="submitting" :label="submitText" severity="Success" icon="pi pi-save" />
     </div>
   </Form>

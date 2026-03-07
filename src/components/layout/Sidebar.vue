@@ -35,8 +35,8 @@
                     </ul>
                   </li>
                   <li>
-                    <div v-if="voteStore.voteExists">
-                      <div class="text-xs/6 font-semibold text-gray-400">{{ vote?.title}}</div>
+                    <div v-if="sessionStore.sessionExists">
+                      <div class="text-xs/6 font-semibold text-gray-400">{{ session?.title}}</div>
                       <ul role="list" class="-mx-2 mt-2 space-y-1">
                         <li v-for="category in categories" :key="category.name">
                           <RouterLink :to="category.href" :class="[currentPath == category.href ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
@@ -80,8 +80,8 @@
                 </ul>
               </li>
               <li>
-                <div v-if="voteStore.voteExists">
-                  <div class="text-xs/6 font-semibold text-gray-400">{{ vote?.title}}</div>
+                <div v-if="sessionStore.sessionExists">
+                  <div class="text-xs/6 font-semibold text-gray-400">{{ session?.title}}</div>
                   <ul role="list" class="-mx-2 mt-2 space-y-1">
                     <li v-for="category in categories" :key="category.name">
                       <RouterLink :to="category.href" :class="[isActive(category) ? 'bg-amber-100 text-amber-900' : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
@@ -118,42 +118,42 @@ import {
   ListBulletIcon
 } from '@heroicons/vue/24/outline'
 import logoImg from '@/assets/banana.png'
-import { useVoteStore } from '@/stores/vote';
+import { useSessionStore } from '@/stores/session';
 
-const voteStore = useVoteStore();
-const vote = computed(() => voteStore.vote);
+const sessionStore = useSessionStore();
+const session = computed(() => sessionStore.session);
 
 const sidebarOpen = ref(false)
 const route = useRoute()
 const currentPath = computed(() => route.path)
 
-// 監聽 route.params.uuid 變化並取得 vote 資料
+// 監聽 route.params.uuid 變化並取得 session 資料
 watch(() => route.params.uuid, async (newUuid) => {
   if (newUuid) {
     try {
-      await voteStore.fetchVoteByUuid(newUuid);
+      await sessionStore.fetchSessionByUuid(newUuid);
     } catch (error) {
-      console.error('Failed to fetch vote:', error);
+      console.error('Failed to fetch session:', error);
     }
   }
 }, { immediate: true });
 
 // 初次載入時也檢查
 onMounted(() => {
-  if (!voteStore.voteExists && route.params.uuid) {
-    voteStore.fetchVoteByUuid(route.params.uuid);
+  if (!sessionStore.sessionExists && route.params.uuid) {
+    sessionStore.fetchSessionByUuid(route.params.uuid);
   }
 });
 
 const isActive = (item) => {
-  if (route.path.startsWith('/manage/vote/upsert')) {
-    return item.href.startsWith('/manage/vote/upsert')
+  if (route.path.startsWith('/manage/session/upsert')) {
+    return item.href.startsWith('/manage/session/upsert')
   }
-  if (route.path.startsWith('/manage/question')) {
-    return item.href.startsWith('/manage/question')
+  if (route.path.startsWith('/manage/poll-option')) {
+    return item.href.startsWith('/manage/poll-option')
   }
-  if (route.path.startsWith('/manage/candidate')) {
-    return item.href.startsWith('/manage/candidate')
+  if (route.path.startsWith('/manage/poll')) {
+    return item.href.startsWith('/manage/poll')
   }
 
   return route.path === item.href
@@ -161,14 +161,14 @@ const isActive = (item) => {
 
 const navigation = [
   { name: 'Dashboard', href: '/manage/dashboard', icon: HomeIcon },
-  { name: 'Votes', href: '/manage/vote', icon: ListBulletIcon },
+  { name: 'Session', href: '/manage/session', icon: ListBulletIcon },
 ]
 
 const categories = computed(() => [
-  { name: 'Edit', href: `/manage/vote/upsert/${voteStore.vote?.uuid}`, initial: 'E' },
-  { name: 'Question', href: `/manage/question/${voteStore.vote?.uuid}`, initial: 'Q' },
-  { name: 'Candidate', href: `/manage/candidate/${voteStore.vote?.uuid}`, initial: 'C' },
-  { name: 'Password', href: `/manage/password/${voteStore.vote?.uuid}`, initial: 'P' },
+  { name: 'Edit', href: `/manage/session/upsert/${sessionStore.session?.uuid}`, initial: 'E' },
+  { name: 'Poll', href: `/manage/poll/${sessionStore.session?.uuid}`, initial: 'Q' },
+  { name: 'Poll Option', href: `/manage/poll-option/${sessionStore.session?.uuid}`, initial: 'C' },
+  { name: 'Invitation', href: `/manage/invitation/${sessionStore.session?.uuid}`, initial: 'P' },
   { name: 'Ballot', href: '#', initial: 'B' },
 ])
 

@@ -1,22 +1,22 @@
 <template>
   <PrimeForm v-slot="$form" :initialValues :resolver @submit="onSubmit" class="flex flex-col gap-4 w-full">
-    <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter candidate information.</span>
+    <span class="text-surface-500 dark:text-surface-400 block mb-8">Enter poll option information.</span>
     <div class="mb-4">
       <div class="flex items-center gap-4 mb-1">
-      <label for="questionId" class="font-semibold w-24">Question</label>
+      <label for="pollId" class="font-semibold w-24">Poll</label>
       <Select 
-        id="questionId" 
-        name="questionId" 
+        id="pollId" 
+        name="pollId" 
         class="flex-auto" 
-        :options="questionStore.questionOptions" 
+        :options="pollStore.pollOptions" 
         optionLabel="label" 
         optionValue="value" 
-        placeholder="Select a Question" 
+        placeholder="Select a Poll" 
         fluid 
       />
       </div>
-      <Message v-if="$form.questionId?.invalid" severity="error" size="small" variant="simple" class="ml-28">
-      {{ $form.questionId.error?.message }}
+      <Message v-if="$form.pollId?.invalid" severity="error" size="small" variant="simple" class="ml-28">
+      {{ $form.pollId.error?.message }}
       </Message>
     </div>
     <div class="mb-4">
@@ -29,7 +29,7 @@
       </Message>
     </div>
     <div class="text-center">
-      <RouterLink :to="`/manage/candidate/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
+      <RouterLink :to="`/manage/poll-option/${uuid}`" class="mr-4 text-gray-500 hover:underline">Back</RouterLink>
       <Button type="submit" :loading="submitting" :label="submitText" severity="Success" icon="pi pi-save" />
     </div>
   </PrimeForm>
@@ -43,16 +43,16 @@ import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
 
-import { CandidateState } from '@/stores/candidate';
-import { useQuestionStore } from '@/stores/question';
+import { PollOptionState } from '@/stores/pollOption';
+import { usePollStore } from '@/stores/poll';
 import { Form as PrimeForm, FormSubmitEvent } from '@primevue/forms';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 
-const questionStore = useQuestionStore();
+const pollStore = usePollStore();
 
 interface Props {
   uuid: string
-  initialValues: CandidateState['initialValues']
+  initialValues: PollOptionState['initialValues']
   submitting?: boolean
   submitText?: string
   resolver: ReturnType<typeof zodResolver>

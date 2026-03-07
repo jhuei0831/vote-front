@@ -1,13 +1,14 @@
 <template>
   <div class="card">
     <Message v-if="state.error" severity="error" :closable="false">
-      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error?.message }}
+      {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error.message }}
     </Message>
 
-    <FormSkeleton v-if="state.loadingInitial" class="p-mb-3" />
+    <div v-if="state.loadingInitial" class="p-mb-3">Loading...</div>
     <Form
       v-if="!state.loadingInitial"
       :key="state.uuid || 'create'"
+      :uuid="state.uuid ?? 'null'"
       :initialValues="state.initialValues"
       :resolver="resolver"
       :submitting="state.submitting"
@@ -18,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, watch } from 'vue';
 
 import { storeToRefs } from 'pinia';
 import Message from 'primevue/message';
@@ -26,24 +27,23 @@ import { useToast } from 'primevue/usetoast';
 import { useRoute } from 'vue-router';
 import { z } from 'zod';
 
-import Form from '@/components/vote/Form.vue';
-import FormSkeleton from '@/components/widget/FormSkeleton.vue';
-import { useVoteStore, VoteState } from '@/stores/vote';
+import Form from '@/components/pollOption/Form.vue';
+import { PollOptionState, usePollOptionStore } from '@/stores/pollOption';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 
 const route = useRoute()
-const store = useVoteStore()
+const store = usePollOptionStore()
 const toast = useToast();
 
-const props = defineProps(['uuid']);
+const props = defineProps(['uuid', 'id']);
 
 onMounted(() => {
-  store.init(props.uuid)
+  store.init(props.uuid, props.id)
 })
 
 // Listen to route changes to re-initialize the store (e.g., when navigating from edit to create)
 watch(() => route.fullPath, () => {
-  store.init(props.uuid)
+  store.init(props.uuid, props.id)
 })
 
 onBeforeUnmount(() => {
@@ -52,16 +52,14 @@ onBeforeUnmount(() => {
 
 const { state } = storeToRefs(store)
 
-const resolver = ref(zodResolver(
+const resolver = zodResolver(
   z.object({
-    title: z.string().min(1, 'Title is required.'),
-    description: z.string().optional(),
-    startTime: z.date('Start Time is required.'),
-    endTime: z.date('End Time is required.')
+    pollId: z.number().min(1, { message: 'Poll is required.' }),
+    name: z.string().min(1, { message: 'Name is required.' }),
   })
-));
+);
 
-async function handleSubmit({ valid, values }: { valid: boolean; values: VoteState['initialValues'] }) {
+async function handleSubmit({ valid, values }: { valid: boolean; values: PollOptionState['initialValues'] }) {
   try {
     console.log('Form submission:', { valid, values });
     console.log('Store initialValues:', state.value.initialValues);
@@ -77,17 +75,16 @@ async function handleSubmit({ valid, values }: { valid: boolean; values: VoteSta
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: state.value.isEdit ? 'Vote updated successfully' : 'Vote created successfully', 
+      detail: state.value.isEdit ? 'Poll option updated successfully' : 'Poll option created successfully', 
       life: 3000
     });
   } catch (e) {
-    // Error is already in state.error, optionally add toast
+    // Errors are already in state.error, but you can add a toast if needed
     console.error('Submit error:', e)
-    const errorMessage = e instanceof Error ? e.message : 'Error updating vote';
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: errorMessage, 
+      detail: state.value.isEdit ? 'Error updating poll option' : 'Error creating poll option', 
       life: 3000
     });
   }

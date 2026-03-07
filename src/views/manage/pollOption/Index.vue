@@ -1,11 +1,11 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Candidates</h1>
+    <h1 class="text-3xl font-bold mb-6">PollOptions</h1>
     <Button 
-      label="Create New Candidate" 
+      label="Create New PollOption" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push(`/manage/candidate/${uuid}/upsert`)"
+      @click="$router.push(`/manage/poll-option/${uuid}/upsert`)"
     />
     
     <!-- Loading -->
@@ -19,9 +19,9 @@
     </div>
 
     <!-- Result -->
-    <div v-else-if="candidates && candidates.length > 0" class="result apollo">
+    <div v-else-if="pollOptions && pollOptions.length > 0" class="result apollo">
       <DataTable 
-        :value="candidates" 
+        :value="pollOptions" 
         striped-rows
         scrollable
         scroll-height="flex"
@@ -36,16 +36,16 @@
         <Column field="name" header="Name" :sortable="true">
           <template #body="slotProps">
             <RouterLink 
-              :to="`/manage/candidate/${uuid}/upsert/${slotProps.data.id}`" 
+              :to="`/manage/poll-option/${uuid}/upsert/${slotProps.data.id}`" 
               class="text-amber-700 hover:underline"
             >
               {{ slotProps.data.name }}
             </RouterLink>
           </template>
         </Column>
-        <Column field="questionId" header="Question" :sortable="true">
+        <Column field="pollId" header="Poll" :sortable="true">
           <template #body="slotProps">
-            {{ questionStore.questionMap.get(slotProps.data.questionId) || 'N/A' }}
+            {{ pollStore.pollMap.get(slotProps.data.pollId) || 'N/A' }}
           </template>
         </Column>
         <Column field="createdAt" header="Created At" :sortable="true">
@@ -61,7 +61,7 @@
         <Column :exportable="false">
           <template #body="slotProps">
             <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-              @click="confirmDeleteCandidate(slotProps.data)" />
+              @click="confirmDeletePollOption(slotProps.data)" />
           </template>
         </Column>
       </DataTable>
@@ -69,17 +69,17 @@
 
     <!-- No result -->
     <div v-else class="p-6 text-center text-gray-500">
-      <div class="text-lg">No candidates found</div>
+      <div class="text-lg">No poll options found</div>
     </div>
-    <Dialog v-model:visible="deleteCandidateDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deletePollOptionDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="candidate">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
+        <span v-if="pollOption">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteCandidateDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deletePollOptionDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteCandidate" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deletePollOption" severity="danger" />
       </template>
     </Dialog>
   </div>
@@ -93,38 +93,38 @@ import Dialog from 'primevue/dialog'
 
 import { useEntityList } from '@/composables/useEntityList'
 import { useEntityDelete } from '@/composables/useEntityDelete'
-import { CANDIDATE_LIST, CANDIDATE_DELETE } from '@/graphql/candidate'
-import { CandidateQueryResult, CandidateState } from '@/stores/candidate'
-import { useQuestionStore } from '@/stores/question'
+import { POLL_OPTION_LIST, POLL_OPTION_DELETE } from '@/graphql/pollOption'
+import { PollOptionQueryResult, PollOptionState } from '@/stores/pollOption'
+import { usePollStore } from '@/stores/poll'
 import { formatDate } from '@/utils/date'
 
 const props = defineProps(['uuid'])
-const questionStore = useQuestionStore()
+const pollStore = usePollStore()
 
-const { loading, error, refetch, items: candidates, totalCount } = useEntityList<CandidateQueryResult, any>({
-  query: CANDIDATE_LIST,
+const { loading, error, refetch, items: pollOptions, totalCount } = useEntityList<PollOptionQueryResult, any>({
+  query: POLL_OPTION_LIST,
   variables: {
-    query: {
-      voteId: props.uuid,
+    input: {
+      sessionId: props.uuid,
       first: 999
     },
-    withQuestions: false
+    withPolls: false
   },
-  extractEdges: (result) => result?.candidates?.[0]?.edges,
-  getTotalCount: (result) => result?.candidates?.[0]?.totalCount ?? 0
+  extractEdges: (result) => result?.pollOptions?.[0]?.edges,
+  getTotalCount: (result) => result?.pollOptions?.[0]?.totalCount ?? 0
 })
 
 const {
-  deleteDialog: deleteCandidateDialog,
-  entity: candidate,
-  confirmDelete: confirmDeleteCandidate,
-  executeDelete: deleteCandidate,
+  deleteDialog: deletePollOptionDialog,
+  entity: pollOption,
+  confirmDelete: confirmDeletePollOption,
+  executeDelete: deletePollOption,
   getDisplayName
-} = useEntityDelete<CandidateState['initialValues']>({
-  mutation: CANDIDATE_DELETE,
-  entityName: 'Candidate',
-  getDisplayName: (candidate) => candidate.name ?? 'this candidate',
-  getDeleteVariables: (candidate) => ({ ids: [candidate.id] }),
+} = useEntityDelete<PollOptionState['initialValues']>({
+  mutation: POLL_OPTION_DELETE,
+  entityName: 'PollOption',
+  getDisplayName: (pollOption) => pollOption.name ?? 'this pollOption',
+  getDeleteVariables: (pollOption) => ({ ids: [pollOption.id] }),
   onSuccess: async () => { await refetch() }
 })
 </script>

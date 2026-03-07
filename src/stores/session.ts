@@ -3,10 +3,10 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 import { apolloProvider } from '@/api/apollo';
-import { VOTE_CREATE, VOTE_LIST, VOTE_UPDATE, VOTE_VIEW } from '@/graphql/vote';
+import { SESSION_CREATE, SESSION_LIST, SESSION_UPDATE, SESSION_VIEW } from '@/graphql/session';
 
-export interface VoteQueryResult {
-  votes: {
+export interface SessionQueryResult {
+  sessions: {
     edges: {
       node: {
         uuid: string;
@@ -25,7 +25,7 @@ export interface VoteQueryResult {
   }[];
 }
 
-export interface VoteState {
+export interface SessionState {
   uuid: string | null;
   isEdit: boolean;
   initialValues: {
@@ -41,10 +41,10 @@ export interface VoteState {
   error: any;
 }
 
-export const useVoteStore = defineStore('vote', () => {
+export const useSessionStore = defineStore('session', () => {
   // State
-  const vote = ref<VoteState['initialValues'] | null>(null);
-  const state = reactive<VoteState>({
+  const session = ref<SessionState['initialValues'] | null>(null);
+  const state = reactive<SessionState>({
     uuid: null,
     isEdit: false,
     initialValues: {
@@ -59,22 +59,22 @@ export const useVoteStore = defineStore('vote', () => {
   });
 
   // Getters
-  const voteExists = computed(() => {
-    if (!vote.value) return false;
-    if (Array.isArray(vote.value)) {
-      return vote.value.length > 0;
+  const sessionExists = computed(() => {
+    if (!session.value) return false;
+    if (Array.isArray(session.value)) {
+      return session.value.length > 0;
     }
-    return typeof vote.value === 'object' && Object.keys(vote.value).length > 0;
+    return typeof session.value === 'object' && Object.keys(session.value).length > 0;
   });
 
   const modeLabel = computed(() => (state.isEdit ? 'Update' : 'Create'))
 
   // Actions
-  function setCurrentVote(newVote: VoteState['initialValues'] | null) {
-    vote.value = newVote;
+  function setCurrentSession(newSession: SessionState['initialValues'] | null) {
+    session.value = newSession;
   }
   
-  async function init(uuid: VoteState['uuid']) {
+  async function init(uuid: SessionState['uuid']) {
     // Initialize: set mode & load initial values (only in edit mode)
     console.log('Init called with uuid:', uuid);
     state.uuid = uuid ?? null
@@ -92,15 +92,15 @@ export const useVoteStore = defineStore('vote', () => {
     
     try {
       const { data } = await apolloProvider.defaultClient.query({
-        query: VOTE_VIEW,
+        query: SESSION_VIEW,
         variables: {
           uuid,
-          withQuestions: false
+          withPolls: false
         },
         fetchPolicy: 'network-only',
       })
       
-      const v = data?.vote
+      const v = data?.session
       
       state.initialValues = v
         ? { 
@@ -120,14 +120,14 @@ export const useVoteStore = defineStore('vote', () => {
     }
   }
 
-  async function submit(values: VoteState['initialValues']) {
+  async function submit(values: SessionState['initialValues']) {
     state.submitting = true
     state.error = null
     try {
       if (!state.isEdit) {
         // Create
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: VOTE_CREATE,
+          mutation: SESSION_CREATE,
           variables: { 
             input: {
               title: values.title,
@@ -138,18 +138,18 @@ export const useVoteStore = defineStore('vote', () => {
           },
           refetchQueries: [
             {
-              query: VOTE_LIST,
+              query: SESSION_LIST,
               variables: {
-                withQuestions: false
+                withPolls: false
               }
             }
           ]
         })
-        return res.data?.createVote
+        return res.data?.createSession
       } else {
         // Update
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: VOTE_UPDATE,
+          mutation: SESSION_UPDATE,
           variables: { 
             uuid: state.uuid,
             input: {
@@ -160,14 +160,14 @@ export const useVoteStore = defineStore('vote', () => {
             }
           },
           refetchQueries: [
-            { query: VOTE_LIST, variables: { withQuestions: false } },
-            { query: VOTE_VIEW, variables: { uuid: state.uuid, withQuestions: false } },
+            { query: SESSION_LIST, variables: { withPolls: false } },
+            { query: SESSION_VIEW, variables: { uuid: state.uuid, withPolls: false } },
           ],
           optimisticResponse: {
-            updateVote: { __typename: 'Vote', uuid: state.uuid, ...values },
+            updateSession: { __typename: 'Session', uuid: state.uuid, ...values },
           }
         })
-        return res.data?.updateVote
+        return res.data?.updateSession
       }
     } catch (e) {
       state.error = e
@@ -186,46 +186,46 @@ export const useVoteStore = defineStore('vote', () => {
     state.error = null
   }
 
-  async function fetchVoteByUuid(uuid: VoteState['uuid']) {
+  async function fetchSessionByUuid(uuid: SessionState['uuid']) {
     if (!uuid) return;
     
     try {
       const result = await apolloProvider.defaultClient.query({
-        query: VOTE_VIEW,
+        query: SESSION_VIEW,
         variables: {
           uuid,
-          withQuestions: false
+          withPolls: false
         }
       });
 
-      if (result.data?.vote) {
-        vote.value = result.data.vote;
+      if (result.data?.session) {
+        session.value = result.data.session;
       }
       
-      return result.data?.vote;
+      return result.data?.session;
     } catch (error) {
-      console.error('Error fetching vote:', error);
+      console.error('Error fetching session:', error);
       throw error;
     }
   }
 
-  function clearVote() {
-    vote.value = null;
+  function clearSession() {
+    session.value = null;
   }
 
   return {
     // state
-    vote,
+    session,
     state,
     // getters
-    voteExists,
+    sessionExists,
     modeLabel,
     // actions
-    setCurrentVote,
+    setCurrentSession,
     init,
     submit,
     reset,
-    fetchVoteByUuid,
-    clearVote,
+    fetchSessionByUuid,
+    clearSession,
   };
 });

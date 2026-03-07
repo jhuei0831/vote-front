@@ -1,11 +1,11 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-6">Votes</h1>
+    <h1 class="text-3xl font-bold mb-6">Sessions</h1>
     <Button 
-      label="Create New Vote" 
+      label="Create New Session" 
       icon="pi pi-plus" 
       class="mb-4" 
-      @click="$router.push('/manage/vote/upsert')"
+      @click="$router.push('/manage/session/upsert')"
     />
     
     <!-- Loading -->
@@ -19,9 +19,9 @@
     </div>
 
     <!-- Result -->
-    <div v-else-if="votes && votes.length > 0" class="result apollo">
+    <div v-else-if="sessions && sessions.length > 0" class="result apollo">
       <DataTable 
-        :value="votes" 
+        :value="sessions" 
         striped-rows
         scrollable
         scroll-height="flex"
@@ -36,8 +36,8 @@
         <Column field="title" header="Title" :sortable="true">
           <template #body="slotProps">
             <RouterLink 
-              :to="`/manage/vote/upsert/${slotProps.data.uuid}`" 
-              @click="voteStore.setCurrentVote(slotProps.data)"
+              :to="`/manage/session/upsert/${slotProps.data.uuid}`" 
+              @click="sessionStore.setCurrentSession(slotProps.data)"
               class="text-amber-700 hover:underline"
             >
               {{ slotProps.data.title }}
@@ -64,7 +64,7 @@
         <Column :exportable="false" style="min-width: 12rem">
           <template #body="slotProps">
             <Button icon="pi pi-trash" variant="outlined" rounded severity="danger"
-              @click="confirmDeleteVote(slotProps.data)" />
+              @click="confirmDeleteSession(slotProps.data)" />
           </template>
         </Column>
       </DataTable>
@@ -72,17 +72,17 @@
 
     <!-- No result -->
     <div v-else class="p-6 text-center text-gray-500">
-      <div class="text-lg">No votes found</div>
+      <div class="text-lg">No sessions found</div>
     </div>
-    <Dialog v-model:visible="deleteVoteDialog" header="Confirm" :modal="true">
+    <Dialog v-model:visible="deleteSessionDialog" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle text-3xl!" />
-        <span v-if="vote">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
+        <span v-if="session">Are you sure you want to delete <b>{{ getDisplayName() }}</b>?</span>
       </div>
       <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteVoteDialog = false" severity="secondary"
+        <Button label="No" icon="pi pi-times" text @click="deleteSessionDialog = false" severity="secondary"
           variant="text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteVote" severity="danger" />
+        <Button label="Yes" icon="pi pi-check" @click="deleteSession" severity="danger" />
       </template>
     </Dialog>
   </div>
@@ -98,39 +98,39 @@ import Tag from 'primevue/tag'
 import TableSkeleton from '@/components/widget/TableSkeleton.vue'
 import { useEntityList } from '@/composables/useEntityList'
 import { useEntityDelete } from '@/composables/useEntityDelete'
-import { VOTE_DELETE, VOTE_LIST } from '@/graphql/vote'
-import { useVoteStore, VoteQueryResult, VoteState } from '@/stores/vote'
+import { SESSION_DELETE, SESSION_LIST } from '@/graphql/session'
+import { useSessionStore, SessionQueryResult, SessionState } from '@/stores/session'
 import { formatDate } from '@/utils/date'
 
-const voteStore = useVoteStore()
-voteStore.clearVote()
+const sessionStore = useSessionStore()
+sessionStore.clearSession()
 
-const { loading, error, refetch, items: votes, totalCount } = useEntityList<VoteQueryResult, any>({
-  query: VOTE_LIST,
+const { loading, error, refetch, items: sessions, totalCount } = useEntityList<SessionQueryResult, any>({
+  query: SESSION_LIST,
   variables: {
-    vote: { first: 999 },
-    withQuestions: false
+    input: { first: 999 },
+    withPolls: false
   },
-  extractEdges: (result) => result?.votes?.[0]?.edges,
-  getTotalCount: (result) => result?.votes?.[0]?.totalCount ?? 0
+  extractEdges: (result) => result?.sessions?.[0]?.edges,
+  getTotalCount: (result) => result?.sessions?.[0]?.totalCount ?? 0
 })
 
 const {
-  deleteDialog: deleteVoteDialog,
-  entity: vote,
-  confirmDelete: confirmDeleteVote,
-  executeDelete: deleteVote,
+  deleteDialog: deleteSessionDialog,
+  entity: session,
+  confirmDelete: confirmDeleteSession,
+  executeDelete: deleteSession,
   getDisplayName
-} = useEntityDelete<VoteState['initialValues']>({
-  mutation: VOTE_DELETE,
-  entityName: 'Vote',
-  getDisplayName: (vote) => vote.title ?? 'this vote',
-  getDeleteVariables: (vote) => ({ uuid: [vote.uuid] }),
+} = useEntityDelete<SessionState['initialValues']>({
+  mutation: SESSION_DELETE,
+  entityName: 'Session',
+  getDisplayName: (session) => session.title ?? 'this session',
+  getDeleteVariables: (session) => ({ uuid: [session.uuid] }),
   onSuccess: async () => { await refetch() }
 })
 
-function getSeverity(vote: VoteState['initialValues']) {
-  switch (vote.status) {
+function getSeverity(session: SessionState['initialValues']) {
+  switch (session.status) {
     case 0:
       return 'danger'
     case 1:

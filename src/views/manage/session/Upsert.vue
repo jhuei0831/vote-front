@@ -4,11 +4,10 @@
       {{ state.isEdit ? 'Read/Submit Failed: ' : 'Submit Failed: ' }} {{ state.error?.message }}
     </Message>
 
-    <div v-if="state.loadingInitial" class="p-mb-3">Loading...</div>
+    <FormSkeleton v-if="state.loadingInitial" class="p-mb-3" />
     <Form
       v-if="!state.loadingInitial"
       :key="state.uuid || 'create'"
-      :uuid="state.uuid"
       :initialValues="state.initialValues"
       :resolver="resolver"
       :submitting="state.submitting"
@@ -18,30 +17,33 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+import { storeToRefs } from 'pinia';
+import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast';
-import { useQuestionStore } from '@/stores/question'
+import { useRoute } from 'vue-router';
 import { z } from 'zod';
+
+import Form from '@/components/session/Form.vue';
+import FormSkeleton from '@/components/widget/FormSkeleton.vue';
+import { useSessionStore, SessionState } from '@/stores/session';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
-import Form from '@/components/question/Form.vue'
-import Message from 'primevue/message'
 
 const route = useRoute()
-const store = useQuestionStore()
+const store = useSessionStore()
 const toast = useToast();
 
-const props = defineProps(['uuid', 'id']);
+const props = defineProps(['uuid']);
 
 onMounted(() => {
-  store.init(props.uuid, props.id)
+  store.init(props.uuid)
 })
 
 // Listen to route changes to re-initialize the store (e.g., when navigating from edit to create)
 watch(() => route.fullPath, () => {
-  store.init(props.uuid, props.id)
+  store.init(props.uuid)
 })
 
 onBeforeUnmount(() => {
@@ -53,15 +55,17 @@ const { state } = storeToRefs(store)
 const resolver = ref(zodResolver(
   z.object({
     title: z.string().min(1, 'Title is required.'),
-    description: z.string().optional()
+    description: z.string().optional(),
+    startTime: z.date('Start Time is required.'),
+    endTime: z.date('End Time is required.')
   })
 ));
 
-async function handleSubmit({ valid, values }) {
+async function handleSubmit({ valid, values }: { valid: boolean; values: SessionState['initialValues'] }) {
   try {
     console.log('Form submission:', { valid, values });
-    console.log('Store initialValues:', state.initialValues);
-    console.log('Is edit mode:', state.isEdit);
+    console.log('Store initialValues:', state.value.initialValues);
+    console.log('Is edit mode:', state.value.isEdit);
     
     if (!valid) {
       console.log('Form validation failed');
@@ -69,20 +73,21 @@ async function handleSubmit({ valid, values }) {
     }
     
     await store.submit(values)
-    // 成功後提示
+    // Show success toast after successful submission
     toast.add({ 
       severity: 'success', 
       summary: 'Success', 
-      detail: 'Question updated successfully', 
+      detail: state.value.isEdit ? 'Session updated successfully' : 'Session created successfully', 
       life: 3000
     });
   } catch (e) {
-    // 錯誤已在 state.error，可視需要加 toast
+    // Error is already in state.error, optionally add toast
     console.error('Submit error:', e)
+    const errorMessage = e instanceof Error ? e.message : 'Error updating session';
     toast.add({ 
       severity: 'error', 
       summary: 'Error', 
-      detail: e.message || 'Error updating question', 
+      detail: errorMessage, 
       life: 3000
     });
   }

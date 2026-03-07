@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 import { apolloProvider } from '@/api/apollo'
-import { PASSWORD_LIST, PASSWORD_CREATE, PASSWORD_UPDATE, PASSWORD_DELETE } from '@/graphql/password'
+import { INVITATION_LIST, INVITATION_CREATE, INVITATION_UPDATE, INVITATION_DELETE } from '@/graphql/invitation'
 
-export enum PasswordFormat {
+export enum InvitationFormat {
   INT = 'int',
   EN = 'en',
   MIX = 'mix',
@@ -12,13 +12,13 @@ export enum PasswordFormat {
   MIX_UPPER = 'mixUpper'
 }
 
-export interface PasswordQueryResult {
-  passwords: {
+export interface InvitationQueryResult {
+  invitations: {
     edges: {
       node: {
         id: number
-        voteId: number
-        password: string
+        sessionId: number
+        codeHash: string
         status: string
         createdAt: string
       }
@@ -28,11 +28,11 @@ export interface PasswordQueryResult {
   }[]
 }
 
-export interface PasswordState {
+export interface InvitationState {
   uuid: string | null
   initialValues: {
     id?: number,
-    password?: string,
+    codeHash?: string,
     number: number,
     length: number,
     format: string
@@ -42,9 +42,9 @@ export interface PasswordState {
   error: string | null
 }
 
-export const usePasswordStore = defineStore('password', () => {
+export const useInvitationStore = defineStore('invitation', () => {
   // State
-  const state = reactive<PasswordState>({
+  const state = reactive<InvitationState>({
     uuid: null,
     initialValues: {
       number: 0,
@@ -57,7 +57,7 @@ export const usePasswordStore = defineStore('password', () => {
   });
 
   // Actions
-  async function init(uuid: PasswordState['uuid']) {
+  async function init(uuid: InvitationState['uuid']) {
       
     // Initialize: set mode & load initial values (only in edit mode)
     state.uuid = uuid ?? null
@@ -68,16 +68,16 @@ export const usePasswordStore = defineStore('password', () => {
     return
   }
 
-  async function submit(values: PasswordState['initialValues']) {
+  async function submit(values: InvitationState['initialValues']) {
       state.submitting = true
       state.error = null
       
       try {
         const res = await apolloProvider.defaultClient.mutate({
-          mutation: PASSWORD_CREATE,
+          mutation: INVITATION_CREATE,
           variables: { 
             input: {
-              voteId: state.uuid,
+              sessionId: state.uuid,
               number: values.number,
               length: values.length,
               format: values.format
@@ -85,17 +85,17 @@ export const usePasswordStore = defineStore('password', () => {
           },
           refetchQueries: [
             {
-              query: PASSWORD_LIST,
+              query: INVITATION_LIST,
               variables: {
                 query: {
-                  voteId: state.uuid,
+                  sessionId: state.uuid,
                   first: 999
                 },
               }
             }
           ]
         })
-        return res.data?.createPassword
+        return res.data?.createInvitation
       } catch (e) {
         state.error = e instanceof Error ? e.message : String(e)
         throw e
@@ -104,23 +104,23 @@ export const usePasswordStore = defineStore('password', () => {
       }
     }
 
-  async function create(voteId: string, values: { number: number; length: number; format: string }) {
+  async function create(sessionId: string, values: { number: number; length: number; format: string }) {
     state.submitting = true
     state.error = null
     
     try {
       const res = await apolloProvider.defaultClient.mutate({
-        mutation: PASSWORD_CREATE,
+        mutation: INVITATION_CREATE,
         variables: {
           input: {
-            voteId,
+            sessionId,
             number: values.number,
             length: values.length,
             format: values.format
           }
         }
       })
-      return res.data?.createPassword
+      return res.data?.createInvitation
     } catch (e) {
       state.error = e instanceof Error ? e.message : String(e)
       throw e
@@ -129,14 +129,14 @@ export const usePasswordStore = defineStore('password', () => {
     }
   }
 
-  async function updateStatus(passwordId: number, voteId: string, status: boolean) {
+  async function updateStatus(invitationId: number, sessionId: string, status: boolean) {
     try {
       await apolloProvider.defaultClient.mutate({
-        mutation: PASSWORD_UPDATE,
+        mutation: INVITATION_UPDATE,
         variables: {
-          ids: [passwordId],
+          ids: [invitationId],
           input: {
-            voteId,
+            sessionId,
             status
           }
         }
@@ -147,14 +147,14 @@ export const usePasswordStore = defineStore('password', () => {
     }
   }
 
-  async function batchUpdateStatus(passwordIds: number[], voteId: string, status: boolean) {
+  async function batchUpdateStatus(invitationIds: number[], sessionId: string, status: boolean) {
     try {
       await apolloProvider.defaultClient.mutate({
-        mutation: PASSWORD_UPDATE,
+        mutation: INVITATION_UPDATE,
         variables: {
-          ids: passwordIds,
+          ids: invitationIds,
           input: {
-            voteId,
+            sessionId,
             status
           }
         }
@@ -165,13 +165,13 @@ export const usePasswordStore = defineStore('password', () => {
     }
   }
 
-  // Delete all selected passwords
-  async function batchDeletePasswords(passwordIds: number[]) {
+  // Delete all selected invitations
+  async function batchDeleteInvitations(invitationIds: number[]) {
     try {
       await apolloProvider.defaultClient.mutate({
-        mutation: PASSWORD_DELETE,
+        mutation: INVITATION_DELETE,
         variables: {
-          ids: passwordIds,
+          ids: invitationIds,
         }
       })
     } catch (e) {
@@ -195,7 +195,7 @@ export const usePasswordStore = defineStore('password', () => {
     create,
     updateStatus,
     batchUpdateStatus,
-    batchDeletePasswords,
+    batchDeleteInvitations,
     reset
   }
 })
